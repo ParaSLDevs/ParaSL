@@ -4,23 +4,25 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <string>
 
 #include "types.h"
 #include "syntax_node.h"
 
+
 class FuncDecl;
 class Statement;
 
 class Declaration : public SyntaxNode {
-    entity_class_t entity_class_;
+    std::unique_ptr<Type> type_;
+    decl_type_t decl_type_;
     std::string name_;
 };
 
 class VarDecl : virtual public Declaration {
-    size_t bit_lenght;
-    prim_type_t type;
+    size_t bit_lenght_;
 };
 
 class ArrayDecl : virtual public Declaration {
