@@ -16,27 +16,25 @@ class FuncDecl;
 class Statement;
 
 class Declaration : public SyntaxNode {
-    std::unique_ptr<Type> type_;
     decl_type_t decl_type_;
     std::string name_;
 };
 
 class VarDecl : virtual public Declaration {
+    VarType vat_type_;
     size_t bit_lenght_;
 };
 
 class ArrayDecl : virtual public Declaration {
-    ArrayType type;
+    ArrayType array_type_
 };
 
 class StructDecl : virtual public Declaration {
-    std::vector<Declaration> fields_;
-    std::vector<FuncDecl> methods_;
+    StructType struct_type_;
 };
 
 class FuncDecl : virtual public Declaration {
-    std::vector<Declaration> args_;
-    Declaration ret_type_;
+    FuncType func_type_;
     std::vector<Statement> body_;
     /*
      * idea:
