@@ -4,12 +4,16 @@
 
 #pragma once
 
+#include <memory>
+
+#include "expressions.h"
+
 class InitList {
 
 };
 
-class InputWithType {
-
+class InputWithType : public InputExpr {
+    std::unique_ptr<Type> type_;
 };
 
 class GlueWithFields {

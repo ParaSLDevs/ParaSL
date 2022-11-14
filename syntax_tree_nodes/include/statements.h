@@ -12,23 +12,24 @@ class Statement : public SyntaxNode {
     stmt_type_t stmt_type;
 };
 
-class UnaryOperatorStmt : public Statement {
-    operator_t op;
-    Expression *expr;
+class UnaryOperatorStmt : public Statement, UnaryOperatorExpr {
+    /*
+     * Don't know what to write here, it seems like all semantics described in parent classes
+     */
 };
 
-class BinaryOperatorStmt : public Statement {
-    operator_t op;
-    Expression *left;
-    Expression *right;
+class BinaryOperatorStmt : public Statement, BinaryOperatorExpr {
+    /*
+     * Don't know what to write here, it seems like all semantics described in parent classes
+     */
 };
 
 class AssignWithDeclStmt : public Statement {
-    Declaration *left;
-    Expression *right;
+    std::unique_ptr<Declaration> left;
+    std::unique_ptr<Expression> right;
 };
 
-class DeclStmt : virtual public Declaration, Statement {
+class DeclStmt : virtual public Declaration, public Statement {
     /*
      * Don't know what to write here, it seems like all semantics described in parent classes
      */
@@ -59,8 +60,8 @@ class FuncDeclStmt : public  DeclStmt, FuncDecl {
 };
 
 class IfStmt : public Statement {
-    Expression *condition_;
-    std::vector<Statement> body_;
+    std::unique_ptr<Expression> condition_;
+    std::vector<std::unique_ptr<Statement>> body_;
     /*
      * idea:
      * We could use not just vector of Statements, but create another
@@ -75,8 +76,8 @@ class LoopStmt : public Statement {
 };
 
 class WhileLoop : public LoopStmt {
-    Expression *condition_;
-    std::vector<Statement> body_;
+    std::unique_ptr<Expression> condition_;
+    std::vector<std::unique_ptr<Statement>> body_;
     /*
      * idea:
      * We could use not just vector of Statements, but create another
@@ -85,10 +86,10 @@ class WhileLoop : public LoopStmt {
 };
 
 class ForLoop : public LoopStmt {
-    Expression *init_expr_;
-    Expression *condition_;
-    Expression *after_loop_expr_;
-    std::vector<Statement> body_;
+    std::unique_ptr<Expression> init_expr_;
+    std::unique_ptr<Expression> condition_;
+    std::unique_ptr<Expression> after_loop_expr_;
+    std::vector<std::unique_ptr<Statement>> body_;
     /*
      * idea:
      * We could use not just vector of Statements, but create another
