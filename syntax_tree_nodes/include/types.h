@@ -24,6 +24,7 @@ class Type {
 
 class VarType : public Type {
     prim_type_t var_type_;
+
 };
 
 class ArrayType : public Type {
@@ -32,7 +33,8 @@ class ArrayType : public Type {
 };
 
 class FuncType : Type {
-
+    std::vector<std::unique_ptr<Type>> arg_types_;
+    std::unique_ptr<Type> ret_type;
 };
 
 class StructType : Type {
