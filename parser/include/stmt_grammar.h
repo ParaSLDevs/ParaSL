@@ -2,25 +2,30 @@
 #define PARASL_STMT_GRAMMAR_H
 
 #include <iostream>
-#include <variant>
 
 #include "statements.h"
 #include "skipper.h"
 #include "common.h"
-#include "expression.h"
+#include "expr_grammar.h"
 
 namespace parasl {
 
-using PrimType = std::variant<int, double, char, float>;
-using IntType = std::variant<int8_t, int16_t, int32_t, int64_t>;
-
 template<typename Iterator>
-struct stmt_grammar : qi::grammar<Iterator, DeclStmt(), Skipper<Iterator>> {
-    stmt_grammar() : stmt_grammar::base_type{INIT_VAR_WITH_TYPE_STMT} {
+struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper<Iterator>> {
+    stmt_grammar() : stmt_grammar::base_type{STMTS} {
+        STMTS = 
+                STMT 
+                | STMTS
+                ;
+        
+        STMT =
+                INIT_VAR_WITH_TYPE_STMT >> char_(';')
+                | EXPR >> char_(';')
+                ;
 
         INIT_VAR_WITH_TYPE_STMT =
-                NAME >> ':' >> VAR_TYPE
-                | NAME >> ':' >> VAR_TYPE >> '=' >> EXPR
+                NAME >> char_(':') >> VAR_TYPE
+                | NAME >> char_(':') >> VAR_TYPE >> char_('=') >> EXPR
                 ;
 
         VAR_TYPE =
@@ -30,7 +35,7 @@ struct stmt_grammar : qi::grammar<Iterator, DeclStmt(), Skipper<Iterator>> {
 
         VAR_TYPE_WITH_BIT_SIZE = qi::int_ >> '(' >> qi::int_ >> ')';
 
-        VAR_BUILTIN_TYPE = qi::int_ | qi::double_ | qi::char_ | qi::float_;
+        VAR_BUILTIN_TYPE = qi::int_ | qi::char_ | qi::double_ | qi::float_;
 
         NAME =
                 !lexeme[keywords_t >> !(alnum | '_')]
@@ -47,11 +52,13 @@ struct stmt_grammar : qi::grammar<Iterator, DeclStmt(), Skipper<Iterator>> {
     }
 
 private:
-    qi::rule<Iterator, DeclStmt(), Skipper<Iterator>> INIT_VAR_WITH_TYPE_STMT;
-    qi::rule<Iterator, std::variant<PrimType, IntType>(), Skipper<Iterator>> VAR_TYPE;
-    qi::rule<Iterator, IntType(), Skipper<Iterator>> VAR_TYPE_WITH_BIT_SIZE;
-    qi::rule<Iterator, PrimType(), Skipper<Iterator>> VAR_BUILTIN_TYPE;
-    qi::rule<Iterator, std::string(), Skipper<Iterator>> NAME;
+    expression_grammar<Iterator> EXPR;
+    qi::rule<Iterator, node_t(), Skipper<Iterator>>
+//            INIT_VAR_WITH_TYPE_STMT, VAR_TYPE, STMT, STMTS;
+            NAME, INIT_VAR_WITH_TYPE_STMT, VAR_TYPE, VAR_TYPE_WITH_BIT_SIZE, VAR_BUILTIN_TYPE, STMT, STMTS;
+//    qi::rule<Iterator, PrimType(), Skipper<Iterator>> VAR_BUILTIN_TYPE;
+//    qi::rule<Iterator, IntType(), Skipper<Iterator>> VAR_TYPE_WITH_BIT_SIZE;
+//    qi::rule<Iterator, std::string(), Skipper<Iterator>> NAME;
 };
 
 }  // namespace parasl

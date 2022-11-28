@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "grammar.h"
+#include "layers_grammar.h"
 
 namespace parasl {
 
