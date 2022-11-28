@@ -8,8 +8,13 @@
 #include "declarations.h"
 
 
-class Statement : public SyntaxNode {
-    stmt_type_t stmt_type;
+class Statement : virtual public SyntaxNode {
+public:
+    // TODO: Write getter
+protected:
+    Statement(stmt_type_t stmt_type) : SyntaxNode(syntax_node_t::STMT), stmt_type_(stmt_type) {}
+
+    stmt_type_t stmt_type_;
 };
 
 class UnaryOperatorStmt : public Statement, UnaryOperatorExpr {

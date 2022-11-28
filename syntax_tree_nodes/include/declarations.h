@@ -15,13 +15,13 @@
 class FuncDecl;
 class Statement;
 
-class Declaration : public SyntaxNode {
+class Declaration : virtual public SyntaxNode {
     decl_type_t decl_type_;
     std::string name_;
 };
 
 class VarDecl : virtual public Declaration {
-    VarType vat_type_;
+    VarType var_type_;
     size_t bit_lenght_;
 };
 
