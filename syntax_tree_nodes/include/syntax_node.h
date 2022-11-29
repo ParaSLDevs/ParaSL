@@ -3,17 +3,21 @@
 //
 
 #include <iterator>
+#include <limits>
+#include <memory>
 
 #include "types.h"
 
 class SyntaxNode {
 public:
 
-    virtual size_t GetChildsNum() const = 0;
+    // TODO: remove parent field and remain only interface methods
 
-    virtual const SyntaxNode *GetChildAt(size_t idx) const = 0;
+    [[nodiscard]] virtual size_t GetChildsNum() const = 0;
 
-    const SyntaxNode *GetParent() const {
+    [[nodiscard]] virtual const SyntaxNode *GetChildAt(size_t idx) const = 0;
+
+    [[nodiscard]] const SyntaxNode *GetParent() const {
         return parent_;
     }
 
@@ -21,7 +25,7 @@ public:
         parent_ = parent;
     }
 
-    syntax_node_t GetSyntaxType() const {
+    [[nodiscard]] syntax_node_t GetSyntaxType() const {
         return syntax_node_type_;
     }
 
@@ -37,23 +41,15 @@ template <size_t num_opnds = std::numeric_limits<size_t>::max()>
 class ChildSyntaxNode : virtual public SyntaxNode {
 public:
 
-    size_t GetChildsNum() const override {
+    [[nodiscard]] size_t GetChildsNum() const override {
         return opnds_.size();
     }
 
-    const SyntaxNode *GetChildAt(size_t idx) const override {
+    [[nodiscard]] const SyntaxNode *GetChildAt(size_t idx) const override {
         return opnds_.at(idx).get();
     }
 
 protected:
-    template<class InputIt>
-    ChildSyntaxNode(InputIt begin, InputIt end) {
-        std::copy(begin, end, opnds_.begin());
-
-        for(auto &elt: opnds_) {
-            elt->SetParent(this);
-        }
-    }
 
     template<class ...Elt>
     ChildSyntaxNode(Elt... elt) : opnds_{std::move(elt)...} {
@@ -78,9 +74,6 @@ public:
     }
 
 protected:
-    // TODO: The same as in generate template
-    template<class InputIt>
-    ChildSyntaxNode(InputIt begin, InputIt end) : opnds_{begin, end} {}
 
     template<class ...Elt>
     ChildSyntaxNode(Elt... elt) : opnds_{elt...} {
@@ -91,5 +84,20 @@ protected:
 
 private:
     std::vector<std::unique_ptr<SyntaxNode>> opnds_;
+};
+
+template <>
+class ChildSyntaxNode<0> : virtual public SyntaxNode {
+public:
+    [[nodiscard]] size_t GetChildsNum() const override {
+        return 0;
+    }
+
+    [[nodiscard]] const SyntaxNode *GetChildAt(size_t) const override {
+        return nullptr;
+    }
+
+protected:
+    ChildSyntaxNode() = default;
 };
 

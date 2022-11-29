@@ -30,7 +30,7 @@ protected:
     const Type *expr_type_;
 };
 
-class UnaryOperatorExpr final : public Expression, public ChildSyntaxNode<1> {
+class UnaryOperatorExpr : public Expression, public ChildSyntaxNode<1> {
 public:
     operator_t GetOperatorType() const {
         return op_type_;
@@ -53,7 +53,7 @@ protected:
     bool is_postfix_;
 };
 
-class BinaryOperatorExpr final : public Expression, ChildSyntaxNode<2> {
+class BinaryOperatorExpr : public Expression, ChildSyntaxNode<2> {
 public:
 
     /*
@@ -68,18 +68,44 @@ protected:
     operator_t op_type_;
 };
 
-class Literal final : public Expression {
+class Literal final : public Expression, ChildSyntaxNode<0> {
 public:
-    Literal(const std::string& value, prim_type_t type) : Expression(expr_type_t::LITERAL, ),
-protected:
+    Literal(const std::string &value, const Type *type) : Expression(expr_type_t::LITERAL, type),
+    ChildSyntaxNode<0>(), literal_value_(value) {}
+
+    /*
+     * idea: somehow return value with actual type of literal
+     */
+    std::string GetLiteralValue() const {
+        return literal_value_;
+    }
+
+private:
     std::string literal_value_;
-    prim_type_t literal_name_;
 };
 
-class Symbol : public Expression {
+class Symbol final : public Expression, ChildSyntaxNode<0> {
+public:
+    Symbol(const std::string &name, const Type *type) : Expression(expr_type_t::SYMBOL, type),
+    ChildSyntaxNode<0>(), name_(name) {}
+
+    std::string GetSymbolName() const {
+        return name_;
+    }
+
+private:
     std::string name_;
 };
 
-class InputExpr : public Expression {
+class InputExpr final : public Expression, ChildSyntaxNode<0> {
+public:
+    InputExpr(size_t num, const Type *type) : Expression(expr_type_t::INPUT, type),
+    ChildSyntaxNode<0>(), num_(num) {}
+
+    [[nodiscard]] size_t GetInputNum () const {
+        return num_;
+    }
+
+private:
     size_t num_;
 };
