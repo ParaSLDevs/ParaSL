@@ -1,7 +1,3 @@
-//
-// Created by denist on 11/14/22.
-//
-
 #pragma once
 
 #include <memory>
@@ -97,7 +93,7 @@ private:
     std::string name_;
 };
 
-class InputExpr final : public Expression, ChildSyntaxNode<0> {
+class InputExpr : public Expression, ChildSyntaxNode<0> {
 public:
     InputExpr(size_t num, const Type *type) : Expression(expr_type_t::INPUT, type),
     ChildSyntaxNode<0>(), num_(num) {}

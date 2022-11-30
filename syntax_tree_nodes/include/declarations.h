@@ -1,7 +1,3 @@
-//
-// Created by denist on 11/14/22.
-//
-
 #pragma once
 
 #include <memory>
@@ -33,7 +29,7 @@ protected:
     std::string name_;
 };
 
-class VarDecl : virtual public Declaration {
+class VarDecl : public Declaration {
 public:
     VarDecl(const std::string &var_name, const VarType *var_type, size_t bit_length) :
     Declaration(decl_type_t::VAR_DECL, var_name), var_type_(var_type), bit_length_(bit_length) {}
@@ -51,7 +47,7 @@ protected:
     size_t bit_length_;
 };
 
-class ArrayDecl : virtual public Declaration {
+class ArrayDecl : public Declaration {
 public:
     ArrayDecl(const std::string &array_name, const ArrayType *array_type) :
             Declaration(decl_type_t::ARRAY_DECL, array_name), array_type_(array_type) {}
@@ -61,10 +57,10 @@ public:
     }
 
 protected:
-    const ArrayType *array_type_
+    const ArrayType *array_type_;
 };
 
-class StructDecl : virtual public Declaration {
+class StructDecl : public Declaration {
 public:
     StructDecl(const std::string &struct_name, const StructType *struct_type) :
             Declaration(decl_type_t::STRUCT_DECL, struct_name), struct_type_(struct_type) {}
@@ -77,12 +73,28 @@ protected:
     const StructType *struct_type_;
 };
 
-class FuncDecl : virtual public Declaration {
+class FuncDecl : public Declaration {
 public:
-    FuncDecl(const std::string &func_name, const FuncType *func_type)
+    template <class RandIt,
+                class = std::enable_if_t<std::is_base_of<std::random_access_iterator_tag, 
+                                        typename std::iterator_traits<RandIt>::iterator_category>::value>>
+    FuncDecl(const std::string &func_name, const FuncType *func_type, RandIt begin, RandIt end) : 
+    Declaration(decl_type_t::FUNC_DECL, func_name), func_type_(func_type), body_(begin, end) {}
+
+    template <class ...Elt>
+    FuncDecl(const std::string &func_name, const FuncType *func_type, Elt... elt) : 
+    Declaration(decl_type_t::FUNC_DECL, func_name), func_type_(func_type), body_{elt...} {}
+
+    const FuncType *GetFuncType() const {
+        return func_type_;
+    }
+
+    const Statement *GetBodyStmtAt(size_t idx) const {
+        return body_.at(idx).get();
+    }
 
 protected:
     const FuncType *func_type_;
-    std::vector<Statement> body_;
+    std::vector<std::unique_ptr<Statement>> body_;
 };
 

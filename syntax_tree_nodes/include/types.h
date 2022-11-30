@@ -1,14 +1,10 @@
-//
-// Created by denist on 11/13/22.
-//
-
 #pragma once
 
 #include <cstddef>
 
 enum class syntax_node_t {NONE, STMT, DECL, EXPR, OPND};
 
-enum class stmt_type_t {UNARY_OP, BINARY_OP, ASSIGN_WITH_DECL, DECL, IF_STMT, WHILE_STMT, FOR_STMT, RET_STMT,
+enum class stmt_type_t {UNARY_OP, BINARY_OP, DECL, CONDCOMP_STMT, FOR_STMT, RET_STMT,
                         OUTPUT_STMT};
 enum class decl_type_t {VAR_DECL, ARRAY_DECL, STRUCT_DECL, FUNC_DECL};
 enum class expr_type_t {OPERATOR, LITERAL, SYMBOL, INPUT};
