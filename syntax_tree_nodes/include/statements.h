@@ -32,25 +32,11 @@ public:
     BinaryOperatorExpr(std::move(left), std::move(right), op_type) {}    
 };
 
-class VarDeclStmt : public Statement, VarDecl {
+class DeclStmt : public Statement, Declaration {
 public:
-    VarDeclStmt(const std::string &var_name, const VarType *var_type, size_t bit_length) : 
+    DeclStmt(decl_type_t decl_type, const std::string &name, const Type *type) : 
     SyntaxNode(syntax_node_t::STMT), 
-    Statement(stmt_type_t::DECL), VarDecl(var_name, var_type, bit_length) {}    
-};
-
-class ArrayDeclStmt : public Statement, ArrayDecl {
-public:
-    ArrayDeclStmt(const std::string &array_name, const ArrayType *array_type) :
-    SyntaxNode(syntax_node_t::STMT), Statement(stmt_type_t::DECL), 
-    ArrayDecl(array_name, array_type) {}    
-};
-
-class StructDeclStmt : public Statement, StructDecl {
-public:
-    StructDeclStmt(const std::string &struct_name, const StructType *struct_type) :
-    SyntaxNode(syntax_node_t::STMT), Statement(stmt_type_t::DECL),
-    StructDecl(struct_name, struct_type) {}    
+    Statement(stmt_type_t::DECL), Declaration(decl_type, name, type) {}    
 };
 
 class FuncDeclStmt : public  Statement, FuncDecl {

@@ -27,17 +27,15 @@ protected:
 
 class VarType : public Type {
 public:
-    explicit VarType(prim_type_t prim_type, size_t bit_lenght) : Type(entity_type_t::VAR), var_type_(prim_type) {}
-
-    [[nodiscard]] prim_type_t GetVarType() const {
-        return var_type_;
-    }
+    explicit VarType(prim_type_t prim_type, size_t bit_length) : Type(entity_type_t::VAR), 
+    prim_type_(prim_type), bit_length_(bit_length) {}
 
 protected:
     /*
      * idea: may be we don't need prim_type_t field
      */
-    prim_type_t var_type_;
+    prim_type_t prim_type_;
+    size_t bit_length_;
 
 };
 

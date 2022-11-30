@@ -100,7 +100,7 @@ protected:
     }
 
     template<class ...Elt>
-    ChildSyntaxNode(Elt... elt) : opnds_{elt...} {
+    ChildSyntaxNode(Elt... elt) : opnds_{std::move(elt)...} {
         for(auto &opnd : opnds_) {
             opnd->SetParent(this);
         }
