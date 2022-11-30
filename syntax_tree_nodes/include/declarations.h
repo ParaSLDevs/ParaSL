@@ -11,7 +11,7 @@
 class FuncDecl;
 class Statement;
 
-class Declaration : virtual public SyntaxNode, ChildSyntaxNode<0> {
+class Declaration : virtual public SyntaxNode {
 public:
     std::string GetDeclName() const {
         return name_;
@@ -21,80 +21,38 @@ public:
         return decl_type_;
     }
 
-protected:
-    Declaration(decl_type_t decl_type, const std::string &name) : SyntaxNode(syntax_node_t::DECL),
-    ChildSyntaxNode<0>(), decl_type_(decl_type), name_(name) {}
+    const Type *GetType() const {
+        return type_;
+    }
 
+protected:
+    Declaration(decl_type_t decl_type, const std::string &name, const Type *type) : SyntaxNode(syntax_node_t::DECL),
+    type_(type), decl_type_(decl_type), name_(name) {}
+
+    const Type *type_;
     decl_type_t decl_type_;
     std::string name_;
 };
 
-class VarDecl : public Declaration {
-public:
-    VarDecl(const std::string &var_name, const VarType *var_type, size_t bit_length) :
-    Declaration(decl_type_t::VAR_DECL, var_name), var_type_(var_type), bit_length_(bit_length) {}
-
-    const VarType *GetVarType() const {
-        return var_type_;
-    }
-
-    size_t GetBitLength() const {
-        return bit_length_;
-    }
-
-protected:
-    const VarType *var_type_;
-    size_t bit_length_;
-};
-
-class ArrayDecl : public Declaration {
-public:
-    ArrayDecl(const std::string &array_name, const ArrayType *array_type) :
-            Declaration(decl_type_t::ARRAY_DECL, array_name), array_type_(array_type) {}
-
-    [[nodiscard]] const ArrayType *GetArrayType() const {
-        return array_type_;
-    }
-
-protected:
-    const ArrayType *array_type_;
-};
-
-class StructDecl : public Declaration {
-public:
-    StructDecl(const std::string &struct_name, const StructType *struct_type) :
-            Declaration(decl_type_t::STRUCT_DECL, struct_name), struct_type_(struct_type) {}
-
-    [[nodiscard]] const StructType *GetStructType() const {
-        return struct_type_;
-    }
-
-protected:
-    const StructType *struct_type_;
-};
-
-class FuncDecl : public Declaration {
+class FuncDecl : public Declaration, private ChildSyntaxNode<> {
 public:
     template <class RandIt,
                 class = std::enable_if_t<std::is_base_of<std::random_access_iterator_tag, 
                                         typename std::iterator_traits<RandIt>::iterator_category>::value>>
     FuncDecl(const std::string &func_name, const FuncType *func_type, RandIt begin, RandIt end) : 
-    Declaration(decl_type_t::FUNC_DECL, func_name), func_type_(func_type), body_(begin, end) {}
+    Declaration(decl_type_t::FUNC_DECL, func_name, func_type), ChildSyntaxNode<>(begin, end) {}
 
     template <class ...Elt>
     FuncDecl(const std::string &func_name, const FuncType *func_type, Elt... elt) : 
-    Declaration(decl_type_t::FUNC_DECL, func_name), func_type_(func_type), body_{elt...} {}
+    Declaration(decl_type_t::FUNC_DECL, func_name, func_type), 
+    ChildSyntaxNode<>(std::move(elt)...) {}
 
-    const FuncType *GetFuncType() const {
-        return func_type_;
+    const SyntaxNode *GetBodyStmtAt(size_t idx) const {
+        return GetChildAt(idx);
     }
 
-    const Statement *GetBodyStmtAt(size_t idx) const {
-        return body_.at(idx).get();
+    size_t GetBodyStmtNum() const {
+        return GetChildsNum();
     }
-
-protected:
-    const FuncType *func_type_;
-    std::vector<std::unique_ptr<Statement>> body_;
 };
 
