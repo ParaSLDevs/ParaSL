@@ -1,12 +1,12 @@
-//
-// Created by denist on 11/14/22.
-//
+#pragma once
 
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <algorithm>
 
 #include "types.h"
+
 
 class SyntaxNode {
 public:
@@ -50,6 +50,16 @@ public:
     }
 
 protected:
+    template <class RandIt, 
+    class = std::enable_if_t<std::is_base_of<std::random_access_iterator_tag, 
+                                        typename std::iterator_traits<RandIt>::iterator_category>::value>>
+    ChildSyntaxNode(RandIt begin, RandIt end) {
+        std::copy(begin, end, opnds_.begin());
+
+        for(auto &opnd : opnds_) {
+            opnd->SetParent(this);
+        }
+    }
 
     template<class ...Elt>
     ChildSyntaxNode(Elt... elt) : opnds_{std::move(elt)...} {
@@ -74,6 +84,20 @@ public:
     }
 
 protected:
+    void AddChild(std::unique_ptr<SyntaxNode> child) {
+        opnds_.push_back(std::move(child));
+    }
+
+    template <class RandIt, 
+    class = std::enable_if_t<std::is_base_of<std::random_access_iterator_tag, 
+                                        typename std::iterator_traits<RandIt>::iterator_category>::value>>
+    ChildSyntaxNode(RandIt begin, RandIt end) {
+        std::copy(begin, end, opnds_.begin());
+
+        for(auto &opnd : opnds_) {
+            opnd->SetParent(this);
+        }
+    }
 
     template<class ...Elt>
     ChildSyntaxNode(Elt... elt) : opnds_{elt...} {
