@@ -28,6 +28,14 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 >>  raw[lexeme[(alpha | '_') >> *(alnum | '_')]]
                 ;
 
+        INPUT_DEF =
+                    (lit("input") > '(' > int_(0) >> ')')                                      [qi::_1]
+                ;
+
+        OUTPUT_STMT =
+                    (lit("output") > '(' > int_(0) >> ',' > EXPR > ')') /* EXPR, not NAME? */  [qi::_1]
+                ;
+
         VAR_TYPE_WITH_BRACKETS =
                     (lit("int") >> '(') > qi::int_ > ')'          // int with size decl
                 ;
@@ -38,10 +46,14 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 ;
 
         INIT_VAR =
-                    (NAME >> ':' >> !ARR_TYPE) > VAR_TYPE         // var decl with type
-                >>  *('=' > EXPR)             [qi::_1]
-                |   (NAME >> '=' >> !lexeme[keywords_t])                        // var decl without type
-                >   EXPR                      [qi::_1]
+                    (NAME >> ':' >> !ARR_TYPE) > VAR_TYPE           // var decl with type
+                >>  *('=' > (EXPR | INPUT_DEF))                                               [qi::_1]
+
+                |   (NAME >> '=' >> !lexeme[keywords_t])            // var decl without type
+                >   EXPR                                                                      [qi::_1]
+
+                |   (NAME >> '=' >> INPUT_DEF)                      // var decl with input(0) : type
+                >   char_(':') > VAR_BUILTIN_TYPE                                             [qi::_1]
                 ;
 
         ARR_TYPE =
@@ -80,9 +92,10 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 ;
 
         STMT =
-                    INIT_VAR > char_(';')
-                |   INIT_ARR > char_(';')
-                |   EXPR > char_(';')
+                    OUTPUT_STMT > ';'
+                |   INIT_VAR > ';'
+                |   INIT_ARR > ';'
+                |   EXPR > ';'
                 ;
 
         STMTS = +STMT
@@ -99,7 +112,7 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 (ARR_DEF_WITH_INPUT)
                 (ARR_DEF_WITH_REPEAT)
                 (ARR_TYPE)
-                (NAME)
+                (NAME)(INPUT_DEF)(OUTPUT_STMT)
         )
 
         // Error handling: on error in STMTS, call error_handler.
@@ -116,7 +129,7 @@ private:
 
     qi::rule<Iterator, node_t(), Skipper>
             ARR_ANY_DEF_SEQ, ARR_TYPE, ARR_DEF_WITH_TYPE, ARR_DEF_WITH_INPUT, ARR_DEF_WITH_REPEAT,
-            INIT_ARR, INIT_VAR, STMT, STMTS;
+            INPUT_DEF, OUTPUT_STMT, INIT_ARR, INIT_VAR, STMT, STMTS;
     qi::rule<Iterator, std::string(), Skipper> 
             NAME, VAR_TYPE_WITH_BRACKETS, VAR_TYPE;
 };
