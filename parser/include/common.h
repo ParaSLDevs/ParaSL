@@ -40,6 +40,8 @@ using qi::fail;
 
 using phx::function;
 
+using SymGroup = qi::symbols<char>;
+
 using StrIter = std::string::iterator;
 using PrimType = std::variant<int, char, double, float>;
 using IntType = std::variant<int8_t, int16_t, int32_t, int64_t>;
@@ -88,7 +90,6 @@ using node_t = ChildSyntaxNode<> *;
 //using node_t = boost::make_recursive_variant<
 //        std::string, std::vector<boost::recursive_variant_> >::type;
 
-
 struct keywords_table : qi::symbols<char> {
     keywords_table() {
         add
@@ -108,7 +109,6 @@ struct keywords_table : qi::symbols<char> {
                 ;
     }
 };
-
 
 }  // namespace parasl
 

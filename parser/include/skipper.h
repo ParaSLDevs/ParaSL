@@ -3,6 +3,8 @@
 
 #include <boost/spirit/include/qi.hpp>
 
+#include "common.h"
+
 namespace parasl {
 
 namespace qi = boost::spirit::qi;
@@ -13,12 +15,11 @@ template <typename Iterator>
 struct Skipper : qi::grammar<Iterator> {
     Skipper() : Skipper::base_type(start) {
         ascii::space_type space;
-        qi::char_type char_;
         qi::eol_type eol;
 
         start =
-                space                             // tab/space/cr/lf
-                |   "//" >> *(char_) >> eol       // C-style comments
+                    space                                 // tab/space/cr/lf
+                |   ("//" >> *(char_ - eol) >> eol)       // C-style comments
                 ;
     }
 
