@@ -30,23 +30,58 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
 
         VAR_TYPE_WITH_BRACKETS =
                     (lit("int") >> '(') > qi::int_ > ')'          // int with size decl
-                |   (VAR_BUILTIN_TYPE >> '[') > qi::int_ > ']'    // arrays decl
                 ;
 
         VAR_TYPE =
                     VAR_TYPE_WITH_BRACKETS
-                |   VAR_BUILTIN_TYPE
+                |   VAR_BUILTIN_TYPE >> !(char_('(') | '[')
                 ;
 
         INIT_VAR =
-                    (NAME >> ':') > VAR_TYPE  // var decl with type
+                    (NAME >> ':' >> !ARR_TYPE) > VAR_TYPE         // var decl with type
                 >>  *('=' > EXPR)             [qi::_1]
-                |   (NAME >> '=')             // var decl without type
+                |   (NAME >> '=' >> !lexeme[keywords_t])                        // var decl without type
                 >   EXPR                      [qi::_1]
+                ;
+
+        ARR_TYPE =
+                    ((VAR_BUILTIN_TYPE >> '[') > qi::int_ > ']')                              [qi::_1]
+                |   (lit("vector") > '<' > VAR_BUILTIN_TYPE > ',' > uint_ > '>')              [qi::_1]
+//                |   STRUCT_TYPE[NUM]             STRUCT_TYPE ?
+//                |   FUNC_TYPE                             ?
+                ;
+
+        ARR_DEF_WITH_TYPE =
+                    ('{' >> ARR_ANY_DEF_SEQ > '}')
+                ;
+
+        ARR_DEF_WITH_INPUT =
+                    (lit("input") >> '(' >> uint_ >> "..")                                     [qi::_1]   // uint_?
+                >>  (uint_ > ')' > char_(':') > (VAR_BUILTIN_TYPE >> '[') > qi::int_ > ']')
+                ;
+
+        ARR_DEF_WITH_REPEAT =
+                    (lit("repeat") > '(' > (NAME | int_) > ',' > uint_ > ')')   [qi::_1] // EXPR instead of name?
+                ;
+        
+        ARR_ANY_DEF_SEQ = 
+//                    -(FUNC_DEF % ',')            [qi::_1]                  arr of funcs?
+//                |   -(STRUCT_DEF % ',')          [qi::_1]
+//                |   -(ARR_DEF_WITH_TYPE % ',')   [qi::_1]                  arr of diff length in rows?
+                   -(EXPR % ',')      [qi::_1]
+                ;
+        
+        INIT_ARR =
+                    ((NAME >> ':') > ARR_TYPE                                                  [qi::_1]
+                >>  *('=' > ARR_DEF_WITH_TYPE))
+
+                |   (NAME >> '=')                                                              [qi::_1]
+                >>  (ARR_DEF_WITH_INPUT | ARR_DEF_WITH_REPEAT)
                 ;
 
         STMT =
                     INIT_VAR > char_(';')
+                |   INIT_ARR > char_(';')
                 |   EXPR > char_(';')
                 ;
 
@@ -55,17 +90,22 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 ;
 
         BOOST_SPIRIT_DEBUG_NODES(
-                (INIT_VAR)
+                (INIT_VAR)(INIT_ARR)
                 (VAR_TYPE)
                 (VAR_TYPE_WITH_BRACKETS)
                 (VAR_BUILTIN_TYPE)
+                (ARR_ANY_DEF_SEQ)
+                (ARR_DEF_WITH_TYPE)
+                (ARR_DEF_WITH_INPUT)
+                (ARR_DEF_WITH_REPEAT)
+                (ARR_TYPE)
                 (NAME)
         )
 
         // Error handling: on error in STMTS, call error_handler.
         on_error<fail>(STMTS,
                        error_handler_function(error_handler)(
-                               "Error while statement parsing! Expecting ", _4, _3));
+                       "Error while statement parsing! Expecting ", _4, _3));
     }
 
 private:
@@ -74,8 +114,11 @@ private:
 
     SymGroup VAR_BUILTIN_TYPE;
 
-    qi::rule<Iterator, node_t(), Skipper> INIT_VAR, STMT, STMTS;
-    qi::rule<Iterator, std::string(), Skipper> NAME, VAR_TYPE_WITH_BRACKETS, VAR_TYPE;
+    qi::rule<Iterator, node_t(), Skipper>
+            ARR_ANY_DEF_SEQ, ARR_TYPE, ARR_DEF_WITH_TYPE, ARR_DEF_WITH_INPUT, ARR_DEF_WITH_REPEAT,
+            INIT_ARR, INIT_VAR, STMT, STMTS;
+    qi::rule<Iterator, std::string(), Skipper> 
+            NAME, VAR_TYPE_WITH_BRACKETS, VAR_TYPE;
 };
 
 }  // namespace parasl
