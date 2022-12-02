@@ -1,0 +1,52 @@
+fact0 = {
+  n = input(0);
+  if (n <= 1) {
+    return 1;
+  }
+  n * fact0(n - 1);
+}
+
+fact1 : (n : int) {
+  if (1 >= n) {
+    return 1;
+  } else {
+    return n * fact1(n - 1);
+  }
+}
+
+fact2 : (n : int(63)) {
+  if (n == 0 || n == 1) {
+    return 1;
+  }
+  return n * fact1(n - 1);
+}
+
+fact3 : (n) {
+  ret = 1;
+  while(n > 0) {
+    ret = ret * n;
+    n = n - 1;
+  }
+  ret;
+}
+
+fact4 : (n : int(32)) : int(32) {
+  ret = 1;
+  for(x in 1:n:1) {
+    ret = ret * x;
+  }
+  return ret;
+}
+
+n : int(64) = input(0);
+
+f0 = fact0(n);
+output(0, f0);
+f1 = fact1(n);
+output(1, f1);
+f2 = fact2(n);
+output(2, f0);
+f3 = fact3(n);
+output(3, f0);
+f4 = fact3(n);
+output(4, f0);

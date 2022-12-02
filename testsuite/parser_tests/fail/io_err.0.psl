@@ -1,0 +1,4 @@
+x = input(0,0); // one arg expected
+arr = input(1..2) // three dots is required
+f = { output(0,0); } // output isn't supported in func scopes
+f(output(0)); // output haven't return value

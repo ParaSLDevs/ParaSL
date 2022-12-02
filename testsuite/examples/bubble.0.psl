@@ -1,0 +1,19 @@
+bubble (arr : int[16], size : int) : int[16] = {
+  for(i in 1:size)
+    for(j in 1:size) {
+      if(arr[i] > arr[j]) {
+        tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+    }
+  return arr;
+}
+
+arr : int[16] = {1,2,3,4,5,6,7,8,
+                 8,7,6,5,4,3,2,1};
+
+arr = bubble(arr, 16);
+
+for(i in : 0:16)
+  output(0,i);

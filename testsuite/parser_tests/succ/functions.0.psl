@@ -1,0 +1,10 @@
+f0 = { input(0) + input(0); };
+f1 = { return input(0) + input(0); };
+f3 : (x) = { input(0) + input(0); };
+f4 : (x : int) : int = {x + x};
+f5 : (x : int) : int = x + x;
+f6 : (x) = x + x;
+
+f0(1);
+f0(f1(1));
+f6(f1(2) + f2(1));

@@ -1,0 +1,7 @@
+x0;
+x1 : int;
+x2 : int(16);
+x3 : int(18);
+x4 : char;
+x5 : float;
+x6 : double;

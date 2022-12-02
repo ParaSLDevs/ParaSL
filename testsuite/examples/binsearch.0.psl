@@ -1,0 +1,24 @@
+bsearch (arr : int[10], val : int) : int = {
+  start = 0;
+  end = 10 - 1; //len - 1
+  mid : int;
+  while (start <= end) {
+    mid = (start + end) / 2;
+    if (arr[mid] == val) {
+      return mid;
+    }
+    if (val < arr[mid]) {
+      end = mid - 1;
+    } else {
+      start = mid + 1;
+    }
+  }
+  return -1;
+}
+
+arr : int[10] = {1,2,3,4,5,6,7,8,9,10};
+
+if(bsearch(arr, 3) == 2)
+  output(0,0);
+else
+  output(0,1);
