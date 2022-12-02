@@ -7,8 +7,6 @@
 
 namespace parasl {
 
-using StrIter = std::string::iterator;
-
 class Parser final {
 public:
     Parser(StrIter begin, StrIter end) : parse_begin_(begin), parse_end_(end) {}

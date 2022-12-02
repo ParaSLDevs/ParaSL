@@ -2,7 +2,7 @@ project(parasl)
 
 cmake_minimum_required(VERSION 3.23)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
@@ -15,6 +15,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_definitions( -std=c++0x )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     add_definitions( /wd4996 )
+endif()
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    add_compile_options(-O2 -ggdb3 -fno-omit-frame-pointer)
 endif()
 
 find_package(Boost 1.60 REQUIRED)
