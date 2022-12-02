@@ -65,7 +65,7 @@ struct expression_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 |   DOT_EXPR
                 |   SQUARE_BRAKET_EXPR
                 |   NAME                                       [qi::_1]
-                |   lit("input") > '(' > int_(0) >> ')'
+//                |   lit("input") > '(' > int_(0) >> ')'     // : int  ??  EXPR or STMT?
                 |   '(' > EXPR > ')'
                 ;
 
