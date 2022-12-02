@@ -44,28 +44,28 @@ struct expression_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 ;
 
         FUNC_CALL =
-                    (NAME >> '(')  [qi::_1]
+                    (NAME >> '(')                              [qi::_1]
                 >   -(OR_EXPR % ',')    // arg list
                 >   ')'
                 ;
 
         DOT_EXPR =
                     (NAME >> '.')
-                >   NAME [qi::_1]
+                >   NAME                                       [qi::_1]
                 ;
 
         SQUARE_BRAKET_EXPR =
-                    NAME  [qi::_1]
+                    NAME                                       [qi::_1]
                 >>  '[' > OR_EXPR > ']'
                 ;
 
         TERM =
-                    qi::uint_ [qi::_1]
-                |   NAME [qi::_1]
+                    qi::uint_                                  [qi::_1]
                 |   FUNC_CALL
                 |   DOT_EXPR
                 |   SQUARE_BRAKET_EXPR
-                |   lit("input") > '(' > int_(0) > ')'
+                |   NAME                                       [qi::_1]
+                |   lit("input") > '(' > int_(0) >> ')'
                 |   '(' > EXPR > ')'
                 ;
 
@@ -109,6 +109,9 @@ struct expression_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 >>  *("=" > OR_EXPR)
                 ;
 
+        // PART OF STMTS TO EXPR
+        // WHAT IF glue() - expression inside another expr but not assignment
+
         BOOST_SPIRIT_DEBUG_NODES(
                 (TERM)(DOT_EXPR)(SQUARE_BRAKET_EXPR)(MULT)(UNARY_EXPR)(ADD_OR_MINUS_EXPR)
                 (LESS_OR_GREATER_EXPR)(EQUALITY_EXPR)(AND_EXPR)(OR_EXPR)(EXPR)
@@ -118,7 +121,7 @@ struct expression_grammar : qi::grammar<Iterator, node_t(), Skipper> {
         // Error handling: on error in EXPR, call error_handler.
         on_error<fail>(EXPR,
                        error_handler_function(error_handler)(
-                               "Expression parsing error! Expecting ", _4, _3));
+                       "Error while expression parsing! Expecting ", _4, _3));
     }
 
 private:

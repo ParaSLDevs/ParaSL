@@ -21,7 +21,6 @@ struct layers_grammar : qi::grammar<Iterator, node_t(), Skipper> {
 
         LAYERS =
                 LAYER
-//                | LAYERS
                 ;
 
         BOOST_SPIRIT_DEBUG_NODES(
