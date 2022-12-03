@@ -36,6 +36,30 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                     (lit("output") > '(' > int_(0) >> ',' > EXPR > ')') /* EXPR, not NAME? */  [qi::_1]
                 ;
 
+        LOOP_IF_BODY =
+                        ('{' > STMTS > '}')
+                    |   STMT
+                ;
+
+        RANGE =
+                    (int_ >> ':') > int_ > -(':' > int_)                                       [qi::_1]
+                ;
+
+        LOOP_HEADER =
+                    (lit("for") > '(' > NAME > lit("in") > (NAME | RANGE) > ')')               [qi::_1]
+                |   (lit("while") > '(' > EXPR > ')')                                          [qi::_1]
+                ;
+
+        LOOP_STMT =
+                    LOOP_HEADER > LOOP_IF_BODY
+                ;
+
+        IF_STMT =
+                    lit("if") > '(' > EXPR > ')'
+                >   LOOP_IF_BODY
+                >   -(lit("else") > LOOP_IF_BODY)
+                ;
+
         VAR_TYPE_WITH_BRACKETS =
                     (lit("int") >> '(') > qi::int_ > ')'          // int with size decl
                 ;
@@ -92,7 +116,9 @@ struct stmt_grammar : qi::grammar<Iterator, node_t(), Skipper> {
                 ;
 
         STMT =
-                    OUTPUT_STMT > ';'
+                    IF_STMT
+                |   LOOP_STMT
+                |   OUTPUT_STMT > ';'
                 |   INIT_VAR > ';'
                 |   INIT_ARR > ';'
                 |   EXPR > ';'
@@ -129,7 +155,8 @@ private:
 
     qi::rule<Iterator, node_t(), Skipper>
             ARR_ANY_DEF_SEQ, ARR_TYPE, ARR_DEF_WITH_TYPE, ARR_DEF_WITH_INPUT, ARR_DEF_WITH_REPEAT,
-            INPUT_DEF, OUTPUT_STMT, INIT_ARR, INIT_VAR, STMT, STMTS;
+            INPUT_DEF, OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE,
+            INIT_ARR, INIT_VAR, STMT, STMTS;
     qi::rule<Iterator, std::string(), Skipper> 
             NAME, VAR_TYPE_WITH_BRACKETS, VAR_TYPE;
 };
