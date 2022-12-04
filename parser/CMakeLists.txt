@@ -1,4 +1,4 @@
-project(parasl)
+set(CMAKE_CXX_FLAGS "")
 
 set(PARSER_SOURCES
     parser.cpp

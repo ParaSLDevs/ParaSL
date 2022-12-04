@@ -6,7 +6,6 @@
 #include <algorithm>
 
 #include "types.h"
-#include <boost/fusion/include/adapt_struct.hpp>
 
 namespace basic_syntax_nodes {
     class SyntaxNode {

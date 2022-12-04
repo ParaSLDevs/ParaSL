@@ -12,6 +12,7 @@
 #include <boost/phoenix.hpp>
 
 #include "error_handler.h"
+#include "syntax_node.h"
 
 namespace parasl {
 
@@ -28,7 +29,6 @@ using qi::lexeme;
 using qi::lit;
 using qi::alpha;
 using qi::alnum;
-using qi::_val_type;
 
 using qi::_1;
 using qi::_2;
@@ -41,57 +41,11 @@ using qi::fail;
 using phx::function;
 
 using SymGroup = qi::symbols<char>;
-
 using StrIter = std::string::iterator;
-using PrimType = std::variant<int, char, double, float>;
-using IntType = std::variant<int8_t, int16_t, int32_t, int64_t>;
+using node_t = basic_syntax_nodes::ChildSyntaxNode<> *;
 
-//class node_t
-//        : public boost::spirit::extended_variant<
-//                SyntaxNode> {
-//public:
-//    using value_type = SyntaxNode *;
-//
-//    node_t(node_t const & rhs) : base_type(node_t.getNode()) {}
-//
-//
-//    base_type::variant_type       & getNode()       { return base_type::get(); }
-//    base_type::variant_type const & getNode() const { return base_type::get(); }
-//};
-//using node_t = boost::variant<
-//        SyntaxNode,
-//        boost::recursive_wrapper<SyntaxNode>
-//>;
-
-using node_t = ChildSyntaxNode<> *;
-//class node_t {
-//public:
-//    using value_type = SyntaxNode *;
-//    value_type node;
-//
-//    node_t() : node(nullptr) {}
-//    node_t(const std::string& str) : node(nullptr) {}
-//    node_t(const int& i) : node(nullptr) {}
-//    node_t(StrIter beg, StrIter end) : node(nullptr) {}
-//
-//    bool empty() const {
-//        return true;
-//    }
-//
-//    void insert(StrIter it, char val) {
-//
-//    }
-//
-//    StrIter end() {
-//        return {};
-//    }
-//};
-
-//using node_t = boost::make_recursive_variant<
-//        std::string, std::vector<boost::recursive_variant_> >::type;
-
-struct keywords_table : qi::symbols<char> {
-    keywords_table() {
+struct keywords_list : SymGroup {
+    keywords_list() {
         add
                 ("layer")
                 ("input")
@@ -106,6 +60,17 @@ struct keywords_table : qi::symbols<char> {
                 ("return")
                 ("char")
                 ("int")
+                ;
+    }
+};
+
+struct prim_types_list : SymGroup {
+    prim_types_list() {
+        add
+                ("int")
+                ("char")
+                ("float")
+                ("double")
                 ;
     }
 };
