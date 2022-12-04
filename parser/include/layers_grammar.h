@@ -4,29 +4,23 @@
 #include <boost/spirit/include/qi.hpp>
 #include <iostream>
 
-#include "stmt_grammar.h"
+#include "layer0_grammar_def.h"
 
 namespace parasl {
 
 template<typename Iterator, typename Skipper>
 struct layers_grammar : qi::grammar<Iterator, node_t(), Skipper> {
     layers_grammar(error_handler<Iterator>& error_handler)
-                    : layers_grammar::base_type{LAYERS}, STMTS(error_handler) {
+                    : layers_grammar::base_type{LAYERS}, LAYER0(error_handler) {
         using error_handler_function = function<parasl::error_handler<Iterator>>;
 
-        LAYER =
-//                lit["layer"] >> '(' >> int_ >> char_(',') >> string >> ')' >> char_('{') >> STMTS >> char_('}')
-                STMTS
-                ;
-
         LAYERS =
-                LAYER
+                    LAYER0
                 ;
 
         BOOST_SPIRIT_DEBUG_NODES(
                 (LAYERS)
-                (LAYER)
-                (STMTS)
+                (LAYER0)
         )
 
         // Error handling: on error in LAYERS, call error_handler.
@@ -36,8 +30,8 @@ struct layers_grammar : qi::grammar<Iterator, node_t(), Skipper> {
     }
 
 private:
-    stmt_grammar<Iterator, Skipper> STMTS;
-    qi::rule<Iterator, node_t(), Skipper> LAYERS, LAYER;
+    layer0_grammar<Iterator, Skipper> LAYER0;
+    qi::rule<Iterator, node_t(), Skipper> LAYERS;
 };
 
 }  // namespace parasl

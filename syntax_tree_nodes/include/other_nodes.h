@@ -8,8 +8,8 @@ class InitList {
 
 };
 
-class InputWithType : public InputExpr {
-    std::unique_ptr<Type> type_;
+class InputWithType : public expressions::InputExpr {
+    std::unique_ptr<types::Type> type_;
 };
 
 class GlueWithFields {
