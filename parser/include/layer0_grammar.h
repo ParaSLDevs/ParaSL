@@ -12,13 +12,13 @@ struct layer0_grammar : qi::grammar<Iterator, node_t(), Skipper> {
 
 private:
     keywords_list keywords_t;
-    prim_types_list VAR_BUILTIN_TYPE;
+    prim_types_list VAR_BUILTIN_TYPES;
 
-    SymGroup UNARY_OP;
-    SymGroup MULT_OP;
-    SymGroup ADD_OP;
-    SymGroup RELATION_OP;
-    SymGroup EQUALITY_OP;
+    qi::symbols<char, UnaryOp> UNARY_OP;
+    qi::symbols<char, MultOp> MULT_OP;
+    qi::symbols<char, AddOp> ADD_OP;
+    qi::symbols<char, RelOp> RELATION_OP;
+    qi::symbols<char, EqOp> EQUALITY_OP;
 
     //Common rules
     qi::rule<Iterator, std::string(), Skipper> NAME;
@@ -36,7 +36,7 @@ private:
 
     // Statement rules
     qi::rule<Iterator, node_t(), Skipper>
-            ARR_TYPE, OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE,
+            VAR_BUILTIN_TYPE, ARR_TYPE, OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE,
             VAR_TYPE_WITH_BRACKETS, VAR_TYPE, ASSIGNMENT, STMT, STMTS;
 
     // Layer0
