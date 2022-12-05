@@ -27,17 +27,17 @@ private:
     // Expression rules
     qi::rule<Iterator, node_t(), Skipper>
             FUNC_CALL, TERM, DOT_EXPR, SQUARE_BRAKET_EXPR, UNARY_EXPR, MULT, ADD_OR_MINUS_EXPR,
-            LESS_OR_GREATER_EXPR, EQUALITY_EXPR, AND_EXPR, OR_EXPR, EXPR, LVAL_EXPR;
+            LESS_OR_GREATER_EXPR, EQUALITY_EXPR, AND_EXPR, OR_EXPR, EXPR, DECL_EXPR;
 
     // Entity expression rules
     qi::rule<Iterator, node_t(), Skipper>
             INPUT_DEF, ARR_DEF_WITH_TYPE, ARR_DEF_WITH_INPUT, ARR_DEF_WITH_REPEAT, ARR_ENTITY_EXPR,
-            STRUCT_TYPE, FUNC_TYPE, FUNC_DEF, GLUE_ARG, STRUCT_DEF, ENTITY_EXPR;
+            STRUCT_TYPE, FUNC_TYPE, FUNC_DEF, BIND_EXPR, GLUE_ARG, STRUCT_DEF, ENTITY_EXPR;
 
     // Statement rules
     qi::rule<Iterator, node_t(), Skipper>
             ARR_TYPE, OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE,
-            VAR_TYPE_WITH_BRACKETS, VAR_TYPE, INIT_VAR, STMT, STMTS;
+            VAR_TYPE_WITH_BRACKETS, VAR_TYPE, ASSIGNMENT, STMT, STMTS;
 
     // Layer0
     qi::rule<Iterator, node_t(), Skipper>

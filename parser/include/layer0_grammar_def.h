@@ -61,15 +61,15 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     SQUARE_BRAKET_EXPR =
-                NAME                                       [qi::_1]
-            >>  '[' > OR_EXPR > ']'
+                (NAME | DOT_EXPR)                          [qi::_1]
+            >>  '[' > EXPR > ']'
             ;
 
     TERM =
                 qi::uint_                                  [qi::_1]
             |   FUNC_CALL
-            |   DOT_EXPR
             |   SQUARE_BRAKET_EXPR
+            |   DOT_EXPR
             |   NAME                                       [qi::_1]
             |   ENTITY_EXPR                                       [qi::_1]
             |   '(' > EXPR > ')'
@@ -112,7 +112,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
 
     EXPR =
                 OR_EXPR
-            >>  *("=" > OR_EXPR)
+            //>>  *("=" > OR_EXPR)
             ;
 
     BOOST_SPIRIT_DEBUG_NODES(
@@ -158,14 +158,25 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
                 (lit("glue") >> '(' >> -(GLUE_ARG % ',') > ')')                              [qi::_1]
             ;
 
+    BIND_EXPR =
+                ((lit("bind") >> '(') > NAME > ',' > (EXPR % ',') > ')')                     [qi::_1]
+            ;
+
     GLUE_ARG =
                 (EXPR >> -(':' > NAME))
-            |   ((lit("bind") >> '(') > NAME > ',' > (EXPR % ',') > ')')                     [qi::_1]
+            |   BIND_EXPR
+            ;
+
+    FUNC_DEF =
+                ('{' >> STMTS > '}')
+            |   BIND_EXPR
+//            |   EXPR
             ;
 
     ENTITY_EXPR =
                 ARR_ENTITY_EXPR
             |   STRUCT_DEF
+            |   FUNC_DEF
             ;
 
     BOOST_SPIRIT_DEBUG_NODES(
@@ -219,7 +230,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     ARR_TYPE =
-                (((VAR_BUILTIN_TYPE | STRUCT_TYPE /*| FUNC_TYPE*/) >> '[')
+                (((VAR_BUILTIN_TYPE | STRUCT_TYPE | FUNC_TYPE) >> '[')
             > uint_ > ']')                                                                 [qi::_1]
 
             |   (lit("vector") > '<' > VAR_BUILTIN_TYPE > ',' > uint_ > '>')               [qi::_1]
@@ -230,29 +241,35 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             |   VAR_BUILTIN_TYPE >> !(char_('(') | '[')                        [qi::_1]
             |   ARR_TYPE
             |   STRUCT_TYPE
-//            |   FUNC_TYPE
+            |   FUNC_TYPE
             ;
 
-    LVAL_EXPR =
+    DECL_EXPR =
                 (NAME >> ':' >> VAR_TYPE)                         [qi::_1]
-            |   NAME                                              [qi::_1]
             ;
 
     STRUCT_TYPE =
-                ('{' >> -(LVAL_EXPR % ',') > '}')                         [qi::_1]
+                ('{' >> -(DECL_EXPR % ',') > '}')                         [qi::_1]
             ;
 
-    INIT_VAR =
-                LVAL_EXPR                         // var decl with type
-            >   -('=' > EXPR)                                                              [qi::_1]
+    FUNC_TYPE =
+                '(' >>
+                    (-(NAME % ',')                                             [qi::_1]
+                     -(DECL_EXPR % ','))
+                > ')'
+            ;
+
+    ASSIGNMENT =
+                (DECL_EXPR | EXPR)                             // var decl with type
+            >>  *('=' >> EXPR)                                                           [qi::_1]
             ;
 
     STMT =
                 IF_STMT
             |   LOOP_STMT
             |   OUTPUT_STMT > ';'
-            |   INIT_VAR > ';'
-            |   EXPR > ';'
+            |   ASSIGNMENT > ';'
+            |   DECL_EXPR > ';'
             ;
 
     STMTS = +STMT
@@ -260,7 +277,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     BOOST_SPIRIT_DEBUG_NODES(
-            (INIT_VAR)
+            (ASSIGNMENT)
             (VAR_TYPE)
             (VAR_TYPE_WITH_BRACKETS)
             (VAR_BUILTIN_TYPE)
