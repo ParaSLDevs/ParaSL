@@ -22,22 +22,26 @@ private:
 
     //Common rules
     qi::rule<Iterator, std::string(), Skipper> NAME;
-    qi::rule<Iterator, node_t(), Skipper> TYPE;
+
+    // types
+    qi::rule<Iterator, type_t(), Skipper> TYPE, STRUCT_TYPE, FUNC_TYPE, VAR_BUILTIN_TYPE,
+    ARR_TYPE, VAR_TYPE_WITH_BRACKETS, VAR_TYPE;
 
     // Expression rules
     qi::rule<Iterator, node_t(), Skipper>
-            FUNC_CALL, TERM, DOT_EXPR, SQUARE_BRAKET_EXPR, UNARY_EXPR, MULT, ADD_OR_MINUS_EXPR,
+            FUNC_CALL, ID, TERM, SUBTERM, SUBSCRIPT, SQUARE_BRAKET_EXPR, UNARY_EXPR, MULT, ADD_OR_MINUS_EXPR,
             LESS_OR_GREATER_EXPR, EQUALITY_EXPR, AND_EXPR, OR_EXPR, EXPR, DECL_EXPR;
+
+    qi::rule<Iterator, std::string(), Skipper> MEMBER_ACCESS;
 
     // Entity expression rules
     qi::rule<Iterator, node_t(), Skipper>
             INPUT_DEF, ARR_DEF_WITH_TYPE, ARR_DEF_WITH_INPUT, ARR_DEF_WITH_REPEAT, ARR_ENTITY_EXPR,
-            STRUCT_TYPE, FUNC_TYPE, FUNC_DEF, BIND_EXPR, GLUE_ARG, STRUCT_DEF, ENTITY_EXPR;
+            FUNC_DEF, BIND_EXPR, GLUE_ARG, STRUCT_DEF, ENTITY_EXPR;
 
     // Statement rules
     qi::rule<Iterator, node_t(), Skipper>
-            VAR_BUILTIN_TYPE, ARR_TYPE, OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE,
-            VAR_TYPE_WITH_BRACKETS, VAR_TYPE, ASSIGNMENT, STMT, STMTS;
+             OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE, ASSIGNMENT, ASSIGNMENT_SEQ, STMT, STMTS, SCOPE;
 
     // Layer0
     qi::rule<Iterator, node_t(), Skipper>
