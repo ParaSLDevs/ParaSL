@@ -1,11 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <variant>
 
 #include "syntax_node.h"
 
 namespace expressions {
-    class Expression : virtual public basic_syntax_nodes::SyntaxNode {
+
+    class Expression : public basic_syntax_nodes::TypedSyntaxNode {
     public:
         expr_type_t GetExprCategory() const {
             return expr_category_type_;
@@ -19,20 +21,31 @@ namespace expressions {
 
     protected:
         Expression(expr_type_t expr_category_type, const types::Type *expr_type) :
-        expr_category_type_(expr_category_type), expr_type_(expr_type) {
-            syntax_node_type_ = syntax_node_t::EXPR;
-        }
+        TypedSyntaxNode(syntax_node_t::EXPR), expr_category_type_(expr_category_type), expr_type_(expr_type) {}
 
         expr_type_t expr_category_type_;
         const types::Type *expr_type_;
     };
 
-    class UnaryOperatorExpr : public Expression, 
-                              public basic_syntax_nodes::ChildSyntaxNode<1> {
+    class OperatorExpression: public Expression{
     public:
+
         operator_t GetOperatorType() const {
             return op_type_;
         }
+
+    protected:
+        OperatorExpression(operator_t optype, const types::Type * type):
+        Expression(expr_type_t::OPERATOR, type), op_type_(optype){}
+
+    private:
+        operator_t op_type_;
+    };
+
+    class UnaryOperatorExpr : public OperatorExpression,
+                              public basic_syntax_nodes::ChildedSyntaxNode<1> {
+    public:
+
 
         bool IsPostfix() const {
             return is_postfix_;
@@ -41,52 +54,86 @@ namespace expressions {
         * idea: restrict available operator_t values
         */
 
-        UnaryOperatorExpr(std::unique_ptr<Expression> opnd, bool is_postfix, operator_t op_type) :
-        Expression(expr_type_t::OPERATOR, opnd->GetType()),
-        ChildSyntaxNode<1>(std::move(opnd)), op_type_(op_type), is_postfix_(is_postfix) {}
+        UnaryOperatorExpr(basic_syntax_nodes::Ref<Expression> opnd, const types::Type * type, bool is_postfix, operator_t op_type) :
+                OperatorExpression(op_type, type),
+                ChildedSyntaxNode<1>(std::move(opnd)), is_postfix_(is_postfix) {}
 
     protected:
 
-        operator_t op_type_;
         bool is_postfix_;
     };
 
-    class BinaryOperatorExpr : public Expression, basic_syntax_nodes::ChildSyntaxNode<2> {
+    class BinaryOperatorExpr : public OperatorExpression, public basic_syntax_nodes::ChildedSyntaxNode<2> {
     public:
 
         /*
         * idea: restrict available operator_t values
         */
-        BinaryOperatorExpr(std::unique_ptr<Expression> left,
-                        std::unique_ptr<Expression> right, operator_t op_type) :
-                Expression(expr_type_t::OPERATOR, left->GetType()),
-                basic_syntax_nodes::ChildSyntaxNode<2>(std::move(left), std::move(right)), 
-                op_type_(op_type) {}
+        BinaryOperatorExpr(basic_syntax_nodes::Ref<Expression> left,
+                           basic_syntax_nodes::Ref<Expression> right, const types::Type * type, operator_t op_type) :
+                OperatorExpression(op_type, type),
+                basic_syntax_nodes::ChildedSyntaxNode<2>(std::move(left), std::move(right)) {}
 
-    protected:
-        operator_t op_type_;
     };
 
-    class Literal final : public Expression, basic_syntax_nodes::ChildSyntaxNode<0> {
+    class MemberAccess : public Expression, public basic_syntax_nodes::ChildedSyntaxNode<1>{
     public:
-        Literal(const std::string &value, const types::Type *type) : Expression(expr_type_t::LITERAL, type),
-        ChildSyntaxNode<0>(), literal_value_(value) {}
 
-        /*
-        * idea: somehow return value with actual type of literal
-        */
-        std::string GetLiteralValue() const {
-            return literal_value_;
+        MemberAccess(basic_syntax_nodes::Ref<Expression> expr, std::string_view member):
+                Expression(expr_type_t::MEMBER_ACCESS, inferType(*expr, member)),
+                basic_syntax_nodes::ChildedSyntaxNode<1>(std::move(expr)), m_member(member){
+
+        };
+
+
+        std::string_view member() const{
+            return m_member;
+        }
+    private:
+
+        types::Type const* inferType(Expression const& expr, std::string_view member){
+            auto* expr_type = expr.GetType();
+            if(!expr_type)
+                return nullptr;
+
+            auto* casted_type = dynamic_cast<types::StructType const*>(expr_type);
+            if(!casted_type)
+                throw std::runtime_error("Expression type expected to be a structure");
+
+            auto foundMember = std::find_if(casted_type->begin(), casted_type->end(), [member](auto& elem){
+                return elem.first == member;});
+
+            if(foundMember == casted_type->end())
+                throw std::runtime_error("Expected member not found in type");
+
+            return foundMember->second;
+        }
+        std::string m_member;
+    };
+
+
+    class Literal final : public Expression, basic_syntax_nodes::LeafNode {
+    public:
+        template<typename T>
+        Literal(T &&value, const types::Type *type) :
+            Expression(expr_type_t::LITERAL, type),
+            ChildedSyntaxNode<0>(), literal_value_(std::forward<T>(value)) {
+
+            }
+
+        template<typename T>
+        T GetLiteralValue() const {
+            return std::get<T>(literal_value_);
         }
 
     private:
-        std::string literal_value_;
+        std::variant<unsigned int, int, std::string> literal_value_;
     };
 
-    class Symbol final : public Expression, basic_syntax_nodes::ChildSyntaxNode<0> {
+    class Identifier final : public Expression, basic_syntax_nodes::LeafNode {
     public:
-        Symbol(const std::string &name, const types::Type *type) : Expression(expr_type_t::SYMBOL, type),
-        ChildSyntaxNode<0>(), name_(name) {}
+        Identifier(std::string_view name, const types::Type *type) : Expression(expr_type_t::SYMBOL, type),
+                                                                       ChildedSyntaxNode<0>(), name_(name) {}
 
         std::string GetSymbolName() const {
             return name_;
@@ -96,10 +143,22 @@ namespace expressions {
         std::string name_;
     };
 
-    class InputExpr : public Expression, basic_syntax_nodes::ChildSyntaxNode<0> {
+    class Reference: public Expression, basic_syntax_nodes::LeafNode{
+    public:
+        Reference(Identifier const* identifier):
+                Expression(expr_type_t::REFERENCE, identifier->GetType()), m_identifier{identifier}{};
+
+        Identifier const* identifier() const{
+            return m_identifier;
+        }
+    private:
+        Identifier const* m_identifier;
+    };
+
+    class InputExpr : public Expression, basic_syntax_nodes::LeafNode {
     public:
         InputExpr(size_t num, const types::Type *type) : Expression(expr_type_t::INPUT, type),
-        ChildSyntaxNode<0>(), num_(num) {}
+                                                         ChildedSyntaxNode<0>(), num_(num) {}
 
         [[nodiscard]] size_t GetInputNum () const {
             return num_;

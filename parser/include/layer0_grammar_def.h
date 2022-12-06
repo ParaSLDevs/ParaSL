@@ -56,49 +56,48 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             >   ')'
             ;
 
-    DOT_EXPR =
-                (NAME >> '.')
-            >   NAME                                       [qi::_1]
-            ;
+    MEMBER_ACCESS = lit(".") >> NAME;
+
+    SUBSCRIPT = lit("[") >> EXPR >> ']';
 
     SQUARE_BRAKET_EXPR =
-                (NAME | DOT_EXPR)                          [qi::_1]
+                NAME                         [qi::_1]
             >>  '[' > EXPR > ']'
             ;
+    ID = NAME [ASTBuilder::Identifier()];
+    SUBTERM = (ID
+            >> *(SUBSCRIPT | MEMBER_ACCESS)) [ASTBuilder::Subterm()];
 
     TERM =
                 qi::uint_                                  [ASTBuilder::IntegralLiteral()]
-            |   FUNC_CALL
-            |   SQUARE_BRAKET_EXPR
-            |   DOT_EXPR
-            |   NAME                                       [ASTBuilder::StringLiteral()]
-            |   ENTITY_EXPR                                       [qi::_1]
-            |   '(' > EXPR > ')'
+            //|   FUNC_CALL                                  [ASTBuilder::Pass()]
+            |   SUBTERM                                       [ASTBuilder::Pass()]
+            |   ('(' > EXPR > ')')                         [ASTBuilder::Pass()]
             ;
 
     UNARY_EXPR =
-                TERM                                [ASTBuilder::Terminal()]
+                TERM                                [ASTBuilder::Pass()]
             |   (UNARY_OP > TERM)                   [ASTBuilder::TerminalWithUnaryOp()]
             ;
 
     MULT =
             (UNARY_EXPR
-            >>  *(MULT_OP > UNARY_EXPR))             [ASTBuilder::Multiplication()]
+            >>  *(MULT_OP > UNARY_EXPR))             [ASTBuilder::BinaryOp<MultOp>()]
             ;
 
     ADD_OR_MINUS_EXPR =
             (MULT
-            >>  *(ADD_OP > MULT))               [ASTBuilder::Addition()]
+            >>  *(ADD_OP > MULT))               [ASTBuilder::BinaryOp<AddOp>()]
             ;
 
     LESS_OR_GREATER_EXPR =
             (ADD_OR_MINUS_EXPR
-            >>  *(RELATION_OP > ADD_OR_MINUS_EXPR))            [ASTBuilder::Relation()]
+            >>  *(RELATION_OP > ADD_OR_MINUS_EXPR))            [ASTBuilder::BinaryOp<RelOp>()]
             ;
 
     EQUALITY_EXPR =
             (LESS_OR_GREATER_EXPR
-            >>  *(EQUALITY_OP > LESS_OR_GREATER_EXPR))           [ASTBuilder::Equality()]
+            >>  *(EQUALITY_OP > LESS_OR_GREATER_EXPR))           [ASTBuilder::BinaryOp<EqOp>()]
             ;
 
     AND_EXPR =
@@ -116,7 +115,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     BOOST_SPIRIT_DEBUG_NODES(
-            (TERM)(DOT_EXPR)(SQUARE_BRAKET_EXPR)(MULT)(UNARY_EXPR)(ADD_OR_MINUS_EXPR)
+            (TERM)(SUBTERM)(SQUARE_BRAKET_EXPR)(MULT)(UNARY_EXPR)(ADD_OR_MINUS_EXPR)
             (LESS_OR_GREATER_EXPR)(EQUALITY_EXPR)(AND_EXPR)(OR_EXPR)(EXPR)
             (ENTITY_EXPR)
     )
@@ -149,9 +148,9 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     ARR_ENTITY_EXPR =
-                ARR_DEF_WITH_TYPE
-            |   INPUT_DEF
-            |   ARR_DEF_WITH_REPEAT
+                ARR_DEF_WITH_TYPE                               [ASTBuilder::Pass()]
+            |   INPUT_DEF                                       [ASTBuilder::Pass()]
+            |   ARR_DEF_WITH_REPEAT                             [ASTBuilder::Pass()]
             ;
 
     STRUCT_DEF =
@@ -168,15 +167,15 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     FUNC_DEF =
-                ('{' >> STMTS > '}')
-            |   BIND_EXPR
-//            |   EXPR
+                ('{' >> STMTS > '}')    [ASTBuilder::Pass()]
+            |   BIND_EXPR               [ASTBuilder::Pass()]
+            //|   EXPR                    [ASTBuilder::Pass()]
             ;
 
     ENTITY_EXPR =
-                ARR_ENTITY_EXPR
-            |   STRUCT_DEF
-            |   FUNC_DEF
+                ARR_ENTITY_EXPR     [ASTBuilder::Pass()]
+            |   STRUCT_DEF          [ASTBuilder::Pass()]
+            |   FUNC_DEF            [ASTBuilder::Pass()]
             ;
 
     BOOST_SPIRIT_DEBUG_NODES(
@@ -201,9 +200,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
                 (lit("output") > '(' > int_(0) >> ',' > EXPR > ')') /* EXPR, not NAME? */  [ASTBuilder::OutputStatement()]
             ;
 
-    LOOP_IF_BODY =
-                ('{' > STMTS > '}')
-            |   STMT
+    LOOP_IF_BODY =  STMT            [ASTBuilder::CompoundStatement()]
             ;
 
     RANGE =
@@ -229,8 +226,10 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
                 ((lit("int") >> '(') > qi::int_ > ')')       [ASTBuilder::IntegralTypeWithBitwidth()]     // int with size decl
             ;
 
+    // TODO: it now fails to parse smth like this: 'int[5][6]'
+
     ARR_TYPE =
-                (((VAR_BUILTIN_TYPE | STRUCT_TYPE | FUNC_TYPE) >> '[')
+                (((VAR_BUILTIN_TYPE | STRUCT_TYPE | ARR_TYPE/*| FUNC_TYPE */) >> '[')
             > uint_ > ']')                                                                 [ASTBuilder::ArrayType()]
 
             |   (lit("vector") > '<' > VAR_BUILTIN_TYPE > ',' > uint_ > '>')               [ASTBuilder::VectorType()]
@@ -241,38 +240,44 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             |   (VAR_BUILTIN_TYPE >> !(char_('(') | '[') )
             |   ARR_TYPE
             |   STRUCT_TYPE
-            |   FUNC_TYPE
+           // |   FUNC_TYPE
             ;
 
     VAR_BUILTIN_TYPE = VAR_BUILTIN_TYPES [ASTBuilder::BuiltInType()];
 
     DECL_EXPR =
-                (NAME >> ':' >> VAR_TYPE)                         [ASTBuilder::Declaration()]
+                (NAME >> -(':' >> VAR_TYPE) >> -('=' > (ASSIGNMENT_SEQ | EXPR)) >> ';' )   [ASTBuilder::Declaration()]
             ;
 
     STRUCT_TYPE =
-                ('{' >> -(DECL_EXPR % ',') > '}')                         [ASTBuilder::StructType()]
+                ('{' >> -((NAME >> ":" >> -VAR_TYPE) % ',') > '}')                         [ASTBuilder::StructType()]
             ;
-
+/*
     FUNC_TYPE =
                 '(' >>
-                    (-(NAME % ',')                                             [qi::_1]
-                     -(DECL_EXPR % ','))
-                > ')'
+                    (-(DECL_EXPR % ','))
+                > ')' > ':' > VAR_TYPE
             ;
+*/
+    // TODO: This should be right associative
+    ASSIGNMENT_SEQ =
+            (EXPR >> '=' >> (ASSIGNMENT_SEQ | EXPR)) [ASTBuilder::Assignment()];
 
-    ASSIGNMENT =
-            ((DECL_EXPR | EXPR)                             // var decl with type
-            >>  *('=' >> EXPR))                                            [ASTBuilder::Assignment()]
+    ASSIGNMENT = ASSIGNMENT_SEQ [ASTBuilder::AssignmentStatement()]
             ;
 
     STMT =
-                IF_STMT
-            |   LOOP_STMT
-            |   OUTPUT_STMT > ';'
-            |   ASSIGNMENT > ';'
-            |   DECL_EXPR > ';'
+                IF_STMT             [ASTBuilder::Pass()]
+            |   LOOP_STMT           [ASTBuilder::Pass()]
+            |   (OUTPUT_STMT > ';') [ASTBuilder::Pass()]
+            |   DECL_EXPR           [ASTBuilder::Pass()]
+            |   (ASSIGNMENT > ';')  [ASTBuilder::Pass()]
+            |   SCOPE [ASTBuilder::Pass()]
+
             ;
+
+    SCOPE = (lit('{')[ASTBuilder::ScopeOpen()] > STMTS >
+             lit('}')[ASTBuilder::ScopeClose()]) [ASTBuilder::Pass()];
 
     STMTS = (*STMT)                   [ASTBuilder::CompoundStatement()]
             ;
@@ -289,7 +294,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
 
     LAYER0 =
 //                lit["layer"] >> '(' >> int_ >> char_(',') >> string >> ')' >> char_('{') >> STMTS >> char_('}')
-                STMTS
+                STMTS   [ASTBuilder::Pass()]
             ;
 
     // Error handling: on error in STMTS, call error_handler.
