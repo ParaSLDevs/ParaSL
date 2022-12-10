@@ -107,18 +107,18 @@ namespace parasl::ast{
 
     class Builder: public Context{
     public:
-        using Node = basic_syntax_nodes::SyntaxNode*;
+        using Node = std::shared_ptr<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>;
 
         Node createIntegralLiteral(unsigned int value);
-        Node createUnaryOpExpr(Node expr, operator_t op);
-        Node createBinaryOpExpr(Node lhs, Node rhs, operator_t op);
+        Node createUnaryOpExpr(const Node &expr, operator_t op);
+        Node createBinaryOpExpr(Node const& lhs, Node const& rhs, operator_t op);
         Node createCompoundStatement(std::vector<Node>&& statements);
-        Node createIfStatement(Node condition, Node then_clause, Node else_clause);
-        Node createAssignStatement(Node assign);
+        Node createIfStatement(Node const& condition, Node const& then_clause, Node const& else_clause);
+        Node createAssignStatement(Node const& assign);
         Node createReference(std::string_view name);
-        Node createMemberAccess(Node expr, std::string_view member);
-        Node createSubscriptAccess(Node expr, Node id_expr);
-        Node createDeclaration(std::string_view id, types::Type const* type = nullptr, Node initializer = nullptr);
+        Node createMemberAccess(Node const& expr, std::string_view member);
+        Node createSubscriptAccess(Node const& expr, Node const& id_expr);
+        Node createDeclaration(std::string_view id, types::Type const* type = nullptr, Node const& initializer = nullptr);
 
         void pushScope() {
             m_symbol_table.pushScope();

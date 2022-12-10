@@ -116,12 +116,12 @@ namespace parasl::ast{
     }
     Builder::Node Builder::createIntegralLiteral(unsigned int value){
         auto literal = std::make_unique<expressions::Literal>(value, getIntegralType(32));
-        return literal.release();
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(std::move(literal));
     }
 
-    Builder::Node Builder::createUnaryOpExpr(Builder::Node expr, operator_t op){
+    Builder::Node Builder::createUnaryOpExpr(const Node &expr, operator_t op){
 
-        auto* casted_expr = dynamic_cast<expressions::Expression *>(expr);
+        auto* casted_expr = dynamic_cast<expressions::Expression *>(expr->release());
 
         assert((bool)expr == (bool)casted_expr && "Broken subexpression");
 
@@ -129,13 +129,13 @@ namespace parasl::ast{
                 std::unique_ptr<expressions::Expression>(casted_expr),
                 casted_expr ? casted_expr->GetType() : nullptr, // TODO: implement type checking
                 false, op);
-        return unaryExpr.release();
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(std::move(unaryExpr));
     }
 
-    Builder::Node Builder::createBinaryOpExpr(Builder::Node lhs, Builder::Node rhs, operator_t op){
+    Builder::Node Builder::createBinaryOpExpr(Builder::Node const& lhs, Builder::Node const& rhs, operator_t op){
 
-        auto* casted_lhs = dynamic_cast<expressions::Expression *>(lhs);
-        auto* casted_rhs = dynamic_cast<expressions::Expression *>(rhs);
+        auto* casted_lhs = dynamic_cast<expressions::Expression *>(lhs->get());
+        auto* casted_rhs = dynamic_cast<expressions::Expression *>(rhs->get());
 
         assert((bool)lhs == (bool)casted_lhs && "Broken lhs node");
         assert((bool)rhs == (bool)casted_rhs && "Broken rhs node");
@@ -145,12 +145,15 @@ namespace parasl::ast{
         if(!type)
             throw SemaError("Operand type mismatch in expression");
 
+        lhs->release();
+        rhs->release();
+
         auto binaryExpr = std::make_unique<expressions::BinaryOperatorExpr>(
                 std::unique_ptr<expressions::Expression>(casted_lhs),
                 std::unique_ptr<expressions::Expression>(casted_rhs),
                 type,
                 op);
-        return binaryExpr.release();
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(std::move(binaryExpr));
     }
 
     Builder::Node Builder::createCompoundStatement(std::vector<Builder::Node>&& statements){
@@ -158,27 +161,33 @@ namespace parasl::ast{
 
         // TODO: get rid of this useless conversion
         std::vector<std::unique_ptr<basic_syntax_nodes::SyntaxNode>> conv_statements;
+        conv_statements.reserve(statements.size());
+
         std::transform(statements.begin(), statements.end(), std::back_inserter(conv_statements), [](auto& stmt){
-            return std::unique_ptr<basic_syntax_nodes::SyntaxNode>(stmt);
+            auto* ptr = stmt->get();
+            stmt->release();
+            return std::unique_ptr<basic_syntax_nodes::SyntaxNode>(ptr);
         });
-        return std::make_unique<statements::CompoundStatement>(conv_statements.begin(), conv_statements.end()).release();
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<statements::CompoundStatement>(conv_statements.begin(), conv_statements.end()));
     }
 
-    Builder::Node Builder::createIfStatement(Builder::Node condition, Builder::Node then_clause, Builder::Node else_clause){
+    Builder::Node Builder::createIfStatement(Builder::Node const& condition, Builder::Node const& then_clause, Builder::Node const& else_clause){
         auto conv_cond = basic_syntax_nodes::Ref<expressions::Expression>(
-                dynamic_cast<expressions::Expression*>(condition)
+                dynamic_cast<expressions::Expression*>(condition->release())
                 );
         auto conv_then_clause = basic_syntax_nodes::Ref<statements::CompoundStatement>(
-                dynamic_cast<statements::CompoundStatement*>(then_clause)
+                dynamic_cast<statements::CompoundStatement*>(then_clause->release())
         );
 
         auto conv_else_clause = basic_syntax_nodes::Ref<statements::CompoundStatement>(
-                dynamic_cast<statements::CompoundStatement*>(else_clause)
+                dynamic_cast<statements::CompoundStatement*>(else_clause ? else_clause->release() : nullptr)
         );
 
-        return std::make_unique<statements::IfStatement>(std::move(conv_cond),
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<statements::IfStatement>(std::move(conv_cond),
                                                          std::move(conv_then_clause),
-                                                         std::move(conv_else_clause)).release();
+                                                         std::move(conv_else_clause)));
     }
 
     Builder::Node Builder::createReference(std::string_view name) {
@@ -195,12 +204,13 @@ namespace parasl::ast{
 
         assert(decl && "Expected declaration statement");
 
-        return std::make_unique<expressions::Reference>(decl->identifier()).release();
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<expressions::Reference>(decl->identifier()));
     }
 
-    Builder::Node Builder::createMemberAccess(Builder::Node expr, std::string_view member) {
+    Builder::Node Builder::createMemberAccess(Builder::Node const& expr, std::string_view member) {
 
-        auto* casted_expr = dynamic_cast<expressions::Expression *>(expr);
+        auto* casted_expr = dynamic_cast<expressions::Expression *>(expr->release());
 
         assert(casted_expr && "Expected expression");
 
@@ -214,18 +224,20 @@ namespace parasl::ast{
             throw SemaError("Cannot access member on non-struct type");
         }
 
-        return std::make_unique<expressions::MemberAccess>(std::unique_ptr<expressions::Expression> {casted_expr},
-                                                           member).release();
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<expressions::MemberAccess>(std::unique_ptr<expressions::Expression> {casted_expr},
+                                                           member));
     }
 
-    Builder::Node Builder::createSubscriptAccess(Node expr, Node id_expr) {
+    Builder::Node Builder::createSubscriptAccess(Node const& expr, Node const& id_expr) {
 
         // TODO: support structure member access via [] (Constant folding required)
 
-        auto* casted_expr = dynamic_cast<expressions::Expression *>(expr);
+        auto* casted_expr = dynamic_cast<expressions::Expression *>(expr->release());
         assert(casted_expr && "Expected expression");
 
-        auto* casted_id_expr = dynamic_cast<expressions::Expression *>(id_expr);
+        auto* casted_id_expr = dynamic_cast<expressions::Expression *>(id_expr->release());
         assert(casted_id_expr && "Expected expression");
 
         auto* expr_type = casted_expr->GetType();
@@ -249,17 +261,18 @@ namespace parasl::ast{
                        dynamic_cast<types::ArrayType const*>(expr_type)->GetEltType();
 
 
-        return std::make_unique<expressions::BinaryOperatorExpr>(
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<expressions::BinaryOperatorExpr>(
                 std::unique_ptr<expressions::Expression>(casted_expr),
                 std::unique_ptr<expressions::Expression>(casted_id_expr),
                 subType, operator_t::SQUARE_BR
-                ).release();
+                ));
     }
 
-    Builder::Node Builder::createDeclaration(std::string_view id, types::Type const* type, Node initializer) {
+    Builder::Node Builder::createDeclaration(std::string_view id, types::Type const* type, Node const& initializer) {
         expressions::Expression * rhs = nullptr;
         if(initializer){
-            rhs = dynamic_cast<expressions::Expression *>(initializer);
+            rhs = dynamic_cast<expressions::Expression *>(initializer->get());
             assert(rhs && "Expected expression");
             if(type){
                 // TODO: do not restrict type to exact match
@@ -280,23 +293,24 @@ namespace parasl::ast{
                 // TODO: create default initializer
             }
 
+            if(initializer)
+                initializer->release();
             auto decl = std::make_unique<statements::DeclarationStatement>(
                                                     std::make_unique<expressions::Identifier>(id, type),
                                                     std::unique_ptr<expressions::Expression>(rhs));
             m_symbol_table.registerSymbol(id.data(), decl.get());
-            return decl.release();
+            return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(std::move(decl));
         } else{
             // Symbol already registered -> it is plain assignment
 
             auto ret = createReference(id);
 
             // Check for redeclaration
-            if(type != dynamic_cast<expressions::Reference*>(ret)->GetType()) {
+            if(type != dynamic_cast<expressions::Reference*>(ret->get())->GetType()) {
                 std::stringstream ss;
                 ss << "Redeclaration of \"" << id << "\" with different type";
                 throw SemaError(ss.str());
             }
-
 
             if(initializer)
                 ret = createBinaryOpExpr(ret, initializer, operator_t::ASSIGN);
@@ -304,10 +318,11 @@ namespace parasl::ast{
         }
     }
 
-    Builder::Node Builder::createAssignStatement(Builder::Node assign) {
-        auto* casted = dynamic_cast<expressions::Expression*>(assign);
+    Builder::Node Builder::createAssignStatement(Builder::Node const& assign) {
+        auto* casted = dynamic_cast<expressions::Expression*>(assign->release());
         assert(casted && "expected expression here");
 
-        return std::make_unique<statements::AssignmentStatement>(std::unique_ptr<expressions::Expression>(casted)).release();
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<statements::AssignmentStatement>(std::unique_ptr<expressions::Expression>(casted)));
     }
 }
