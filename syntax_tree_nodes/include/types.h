@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-enum class syntax_node_t {NONE, STMT, DECL, EXPR, OPND};
+enum class syntax_node_t {STMT, EXPR};
 
 enum class stmt_type_t {ASSIGNMENT, FOR_STMT, RET_STMT,
                         OUTPUT_STMT, COMPOUND_STMT, IF_STMT, DECL};

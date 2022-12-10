@@ -25,7 +25,7 @@ bool Parser::Run() {
     } else{
         auto printer = ast::Printer();
 
-        printer.print(root->get());
+        printer.visit(root->get());
     }
 
 

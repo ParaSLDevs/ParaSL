@@ -37,7 +37,7 @@ namespace basic_syntax_nodes {
 
     class TypedSyntaxNode: public virtual SyntaxNode{
     public:
-        TypedSyntaxNode(syntax_node_t syntax_type = syntax_node_t::NONE):
+        TypedSyntaxNode(syntax_node_t syntax_type):
         syntax_node_type_(syntax_type){}
 
         [[nodiscard]] syntax_node_t GetNodeType() const {
