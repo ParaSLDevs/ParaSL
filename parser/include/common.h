@@ -96,7 +96,7 @@ inline operator_t translate(EqOp op){
     return op == EqOp::EQ ? operator_t::EQ : operator_t::NE;
 }
 
-using node_t = basic_syntax_nodes::SyntaxNode*;
+using node_t = std::shared_ptr<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>;
 using type_t = types::Type const*;
 
 enum class Keywords{
