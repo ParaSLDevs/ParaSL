@@ -25,7 +25,7 @@ private:
 
     // types
     qi::rule<Iterator, type_t(), Skipper> TYPE, STRUCT_TYPE, FUNC_TYPE, VAR_BUILTIN_TYPE,
-    ARR_TYPE, VAR_TYPE_WITH_BRACKETS, VAR_TYPE;
+    ARR_TYPE, VAR_TYPE_WITH_BRACKETS, PRIMITIVE_TYPE, VECTOR_TYPE, VAR_TYPE;
 
     // Expression rules
     qi::rule<Iterator, node_t(), Skipper>

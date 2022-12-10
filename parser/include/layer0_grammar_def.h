@@ -226,22 +226,23 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
                 ((lit("int") >> '(') > qi::int_ > ')')       [ASTBuilder::IntegralTypeWithBitwidth()]     // int with size decl
             ;
 
-    // TODO: it now fails to parse smth like this: 'int[5][6]'
 
     ARR_TYPE =
-                (((VAR_BUILTIN_TYPE | STRUCT_TYPE | ARR_TYPE/*| FUNC_TYPE */) >> '[')
-            > uint_ > ']')                                                                 [ASTBuilder::ArrayType()]
-
-            |   (lit("vector") > '<' > VAR_BUILTIN_TYPE > ',' > uint_ > '>')               [ASTBuilder::VectorType()]
+                ((PRIMITIVE_TYPE | STRUCT_TYPE | VECTOR_TYPE) >> *('[' > uint_ > ']'))      [ASTBuilder::ArrayType()]
             ;
 
+    VECTOR_TYPE = (lit("vector") > '<' > VAR_BUILTIN_TYPE > ',' > uint_ > '>')              [ASTBuilder::VectorType()];
+
     VAR_TYPE =
-                VAR_TYPE_WITH_BRACKETS
-            |   (VAR_BUILTIN_TYPE >> !(char_('(') | '[') )
-            |   ARR_TYPE
+                ARR_TYPE
+            |   VECTOR_TYPE
+            |   PRIMITIVE_TYPE
             |   STRUCT_TYPE
            // |   FUNC_TYPE
             ;
+
+    PRIMITIVE_TYPE = VAR_TYPE_WITH_BRACKETS
+                    | VAR_BUILTIN_TYPE;
 
     VAR_BUILTIN_TYPE = VAR_BUILTIN_TYPES [ASTBuilder::BuiltInType()];
 
@@ -259,7 +260,6 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
                 > ')' > ':' > VAR_TYPE
             ;
 */
-    // TODO: This should be right associative
     ASSIGNMENT_SEQ =
             (EXPR >> '=' >> (ASSIGNMENT_SEQ | EXPR)) [ASTBuilder::Assignment()];
 
