@@ -335,9 +335,16 @@ struct prim_types_list : qi::symbols<char, BuiltInType> {
 
         struct ArrayType : public ActionBase<ArrayType>{
             template<typename Context>
-            void impl(boost::fusion::vector<type_t, unsigned int> const& type, Context &ctx, qi::unused_type) const {
-                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->getArrayType(boost::fusion::at_c<0>(type),
-                        boost::fusion::at_c<1>(type));
+            void impl(boost::fusion::vector<type_t, std::vector<unsigned int>> const& type, Context &ctx, qi::unused_type) const {
+
+                auto acc = boost::fusion::at_c<0>(type);
+                auto& dims = boost::fusion::at_c<1>(type);
+
+                boost::fusion::at_c<0>(ctx.attributes) =
+                        std::accumulate(dims.begin(), dims.end(), acc, [](auto a, auto& dim) {
+                            return builderCtx->getArrayType(a, dim);
+                        });
+
             }
         };
 
