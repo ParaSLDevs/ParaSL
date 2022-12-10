@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "syntax_node.h"
-#include "declarations.h"
 #include "expressions.h"
 
 namespace statements {
