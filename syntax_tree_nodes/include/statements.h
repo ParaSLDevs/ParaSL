@@ -114,26 +114,52 @@ namespace statements {
         }
     };
 
-    class ForLoop : public Statement, protected basic_syntax_nodes::ChildedSyntaxNode<4> {
+    class ForHeader: public Statement, public basic_syntax_nodes::ChildedSyntaxNode<2>{
     public:
-        ForLoop(basic_syntax_nodes::Ref<Statement> init,
-                basic_syntax_nodes::Ref<expressions::Expression> cond,
-                basic_syntax_nodes::Ref<expressions::Expression> after,
+        ForHeader(basic_syntax_nodes::Ref<statements::DeclarationStatement> inductive_var,
+                  basic_syntax_nodes::Ref<expressions::RangeExpr> range):
+                Statement(stmt_type_t::FOR_HEADER), basic_syntax_nodes::ChildedSyntaxNode<2>{
+            std::move(inductive_var), std::move(range)
+        }{
+
+        }
+
+        statements::DeclarationStatement const* inductiveVar() const{
+            return dynamic_cast<statements::DeclarationStatement const*>(GetChildAt(0));
+        }
+
+        expressions::RangeExpr const* range() const{
+            return dynamic_cast<expressions::RangeExpr const*>(GetChildAt(1));
+        }
+    };
+
+    class ForLoop : public Statement, protected basic_syntax_nodes::ChildedSyntaxNode<2> {
+    public:
+        ForLoop(basic_syntax_nodes::Ref<ForHeader> header,
                 basic_syntax_nodes::Ref<CompoundStatement> body) :
         Statement(stmt_type_t::FOR_STMT),
-        ChildedSyntaxNode<4>(std::move(init), std::move(cond), std::move(after), std::move(body)) {
+        ChildedSyntaxNode<2>(std::move(header), std::move(body)) {
         }
 
-        const Statement *GetInit() const {
-            return dynamic_cast<const Statement *>(GetChildAt(0));
+        const ForHeader *GetHeader() const {
+            return dynamic_cast<const ForHeader *>(GetChildAt(0));
         }
 
-        const expressions::Expression *GetCond() const {
-            return dynamic_cast<const expressions::Expression *>(GetChildAt(1));
+        const CompoundStatement *GetBody() const {
+            return dynamic_cast<const CompoundStatement *>(GetChildAt(3));
+        }
+    };
+
+    class WhileLoop : public Statement, protected basic_syntax_nodes::ChildedSyntaxNode<2> {
+    public:
+        WhileLoop(basic_syntax_nodes::Ref<expressions::Expression> condition,
+                basic_syntax_nodes::Ref<CompoundStatement> body) :
+                Statement(stmt_type_t::WHILE_STMT),
+                ChildedSyntaxNode<2>(std::move(condition), std::move(body)) {
         }
 
-        const expressions::Expression *GetAfterExpr() const {
-            return dynamic_cast<const expressions::Expression *>(GetChildAt(2));
+        const expressions::Expression *GetCondition() const {
+            return dynamic_cast<const expressions::Expression *>(GetChildAt(0));
         }
 
         const CompoundStatement *GetBody() const {

@@ -21,6 +21,10 @@ namespace parasl::ast{
 
         void operator()(expressions::Expression const* node);
 
+        void operator()(expressions::IndexedRange const* node);
+
+        void operator()(expressions::ArrayRange const* node);
+
         void operator()(statements::AssignmentStatement const* node);
 
         void operator()(statements::CompoundStatement const* node);
@@ -28,6 +32,12 @@ namespace parasl::ast{
         void operator()(statements::IfStatement const* node);
 
         void operator()(statements::DeclarationStatement const* node);
+
+        void operator()(statements::ForLoop const* node);
+
+        void operator()(statements::ForHeader const* node);
+
+        void operator()(statements::WhileLoop const* node);
 
         void operator()(statements::Statement const* node);
 

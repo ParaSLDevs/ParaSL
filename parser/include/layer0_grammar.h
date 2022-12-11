@@ -41,7 +41,7 @@ private:
 
     // Statement rules
     qi::rule<Iterator, node_t(), Skipper>
-             OUTPUT_STMT, LOOP_STMT, LOOP_HEADER, LOOP_IF_BODY, IF_STMT, RANGE, ASSIGNMENT, ASSIGNMENT_SEQ, STMT, STMTS, SCOPE;
+             OUTPUT_STMT, FOR_STMT, FOR_HEADER, WHILE_STMT, LOOP_IF_BODY, IF_STMT, ASSIGNMENT, ASSIGNMENT_SEQ, STMT, STMTS, SCOPE;
 
     // Layer0
     qi::rule<Iterator, node_t(), Skipper>

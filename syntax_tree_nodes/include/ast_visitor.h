@@ -87,6 +87,20 @@ namespace parasl::ast{
                             derived.Derived::operator()(repeat);
                             break;
                         }
+                        case expr_type_t::RANGE:{
+                            auto *range = dynamic_cast<const expressions::RangeExpr *>(expr);
+                            assert(range && "expected range expression");
+                            if(range->arrayBased()){
+                                auto *arrayBasedRange = dynamic_cast<const expressions::ArrayRange *>(range);
+                                assert(arrayBasedRange && "expected array range expression");
+                                derived.Derived::operator()(arrayBasedRange);
+                            } else{
+                                auto *indexedRange = dynamic_cast<const expressions::IndexedRange *>(range);
+                                assert(indexedRange && "expected indexed range expression");
+                                derived.Derived::operator()(indexedRange);
+                            }
+                            break;
+                        }
                     }
                     break;
                 }
@@ -136,6 +150,18 @@ namespace parasl::ast{
                             auto* out = dynamic_cast<const statements::OutputStmt*>(node);
                             assert(out && "expected output statement");
                             derived.Derived::operator()(out);
+                            break;
+                        }
+                        case stmt_type_t::FOR_HEADER:{
+                            auto* for_head = dynamic_cast<const statements::ForHeader*>(node);
+                            assert(for_head && "expected for header statement");
+                            derived.Derived::operator()(for_head);
+                            break;
+                        }
+                        case stmt_type_t::WHILE_STMT:{
+                            auto* while_stmt = dynamic_cast<const statements::WhileLoop*>(node);
+                            assert(while_stmt && "expected while statement");
+                            derived.Derived::operator()(while_stmt);
                             break;
                         }
                     }

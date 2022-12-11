@@ -123,6 +123,11 @@ namespace parasl::ast{
         Node createInitializerListExpr(std::vector<Node> const& members);
         Node createGlueExpr(std::vector<std::pair<Node, std::optional<std::string>>> const&members);
         Node createBindExpr(std::vector<std::reference_wrapper<Node>> const&members);
+        Node createRange(int begin, int end, int step);
+        Node createRange(Node const& array);
+        Node createForHeader(std::string var, Node const& range);
+        Node createForLoop(Node const& header, Node const& body);
+        Node createWhileLoop(Node const& condition, Node const& body);
 
         void pushScope() {
             m_symbol_table.pushScope();

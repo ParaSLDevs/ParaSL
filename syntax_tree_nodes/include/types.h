@@ -5,9 +5,8 @@
 enum class syntax_node_t {STMT, EXPR};
 
 enum class stmt_type_t {ASSIGNMENT, FOR_STMT, RET_STMT,
-                        OUTPUT_STMT, COMPOUND_STMT, IF_STMT, DECL};
-enum class decl_type_t {VAR_DECL, ARRAY_DECL, STRUCT_DECL, FUNC_DECL};
-enum class expr_type_t {OPERATOR, LITERAL, SYMBOL, INPUT, MEMBER_ACCESS, REFERENCE, INIT_LIST, REPEAT, GLUE, BIND};
+                        OUTPUT_STMT, COMPOUND_STMT, IF_STMT, DECL, FOR_HEADER, WHILE_STMT};
+enum class expr_type_t {OPERATOR, LITERAL, SYMBOL, INPUT, MEMBER_ACCESS, REFERENCE, INIT_LIST, REPEAT, GLUE, BIND, RANGE};
 enum class entity_type_t {VAR, ARRAY, VECTOR, STRUCT, FUNC};
 
 enum class operator_t {ASSIGN, PLUS, MINUS, MULT, DIV, AND, OR, LT, GT, LE, GE, NOT, DOT, SQUARE_BR, PAREN, EQ, NE};

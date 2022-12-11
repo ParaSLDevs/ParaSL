@@ -201,4 +201,44 @@ namespace expressions {
                 Expression(expr_type_t::BIND, type),
                 basic_syntax_nodes::ChildedSyntaxNode<2>{std::move(func), std::move(member)}{};
     };
+
+    class RangeExpr: public Expression{
+    public:
+
+        RangeExpr(types::Type const* type, bool arrayBased): Expression(expr_type_t::RANGE, type),
+        m_array_based(arrayBased){}
+
+        bool arrayBased() const{
+            return m_array_based;
+        }
+    private:
+        bool m_array_based;
+    };
+
+    class ArrayRange: public RangeExpr, public basic_syntax_nodes::ChildedSyntaxNode<1>{
+    public:
+        ArrayRange(types::Type const* type, std::unique_ptr<Expression> array):
+                RangeExpr(type, true), basic_syntax_nodes::ChildedSyntaxNode<1>(std::move(array)){};
+    };
+
+    class IndexedRange: public RangeExpr, public basic_syntax_nodes::LeafNode {
+    public:
+        IndexedRange(types::Type const* type, int begin, int end, int step):
+        RangeExpr(type, false), m_begin(begin), m_end(end), m_step(step){};
+
+
+        auto begin() const{
+            return m_begin;
+        }
+        auto end() const{
+            return m_end;
+        }
+
+        auto step() const{
+            return m_step;
+        }
+
+    private:
+        int m_begin, m_end, m_step;
+    };
 }
