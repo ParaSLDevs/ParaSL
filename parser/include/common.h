@@ -452,6 +452,39 @@ struct prim_types_list : qi::symbols<char, BuiltInType> {
             }
         };
 
+
+        struct InitializerList : public ActionBase<InitializerList>{
+            template<typename Context>
+            void impl(std::vector<node_t> const& members, Context &ctx, qi::unused_type) const {
+                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->createInitializerListExpr(members);
+            }
+        };
+
+        struct RepeatExpression : public ActionBase<RepeatExpression>{
+            template<typename Context>
+            void impl(boost::fusion::vector<node_t, unsigned int> const& repeat, Context &ctx, qi::unused_type) const {
+                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->createRepeatExpr(boost::fusion::at_c<0>(repeat),
+                                                                                      boost::fusion::at_c<1>(repeat));
+            }
+        };
+
+        struct GlueExpression : public ActionBase<GlueExpression>{
+            template<typename Context>
+            void impl(std::vector<boost::fusion::vector<node_t, std::optional<std::string>>> const& glue,
+                      Context &ctx, qi::unused_type) const {
+
+                std::vector<std::pair<node_t , std::optional<std::string>>> transformed;
+
+                std::transform(glue.begin(), glue.end(), std::back_inserter(transformed), [](auto& glue_elem){
+                    std::optional<std::string> str;
+                    if(boost::fusion::at_c<1>(glue_elem))
+                        str = boost::fusion::at_c<1>(glue_elem).value();
+                    return std::make_pair(boost::fusion::at_c<0>(glue_elem), str);
+                });
+                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->createGlueExpr(transformed);
+            }
+        };
+
     };
 
 }  // namespace parasl

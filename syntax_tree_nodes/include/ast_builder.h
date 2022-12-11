@@ -119,6 +119,10 @@ namespace parasl::ast{
         Node createMemberAccess(Node const& expr, std::string_view member);
         Node createSubscriptAccess(Node const& expr, Node const& id_expr);
         Node createDeclaration(std::string_view id, types::Type const* type = nullptr, Node const& initializer = nullptr);
+        Node createRepeatExpr(Node const& expr, unsigned times);
+        Node createInitializerListExpr(std::vector<Node> const& members);
+        Node createGlueExpr(std::vector<std::pair<Node, std::optional<std::string>>> const&members);
+        Node createBindExpr(std::vector<std::reference_wrapper<Node>> const&members);
 
         void pushScope() {
             m_symbol_table.pushScope();

@@ -167,4 +167,38 @@ namespace expressions {
     private:
         size_t num_;
     };
+
+    class InitializationList: public Expression, public basic_syntax_nodes::ChildedSyntaxNode<>{
+    public:
+        InitializationList(types::Type const* type, auto begin, auto end):
+                Expression(expr_type_t::INIT_LIST, type),
+                basic_syntax_nodes::ChildedSyntaxNode<>{begin, end}{};
+    };
+
+    class RepeatExpr: public Expression, public basic_syntax_nodes::ChildedSyntaxNode<1>{
+    public:
+        RepeatExpr(types::Type const* type, basic_syntax_nodes::Ref<Expression> expr, unsigned times):
+                Expression(expr_type_t::REPEAT, type),
+                basic_syntax_nodes::ChildedSyntaxNode<1>{std::move(expr)}, m_times(times){};
+
+        unsigned times() const{
+            return m_times;
+        }
+    private:
+        unsigned m_times;
+    };
+
+    class GlueExpr: public Expression, public basic_syntax_nodes::ChildedSyntaxNode<>{
+    public:
+        GlueExpr(types::Type const* type, auto begin, auto end):
+                Expression(expr_type_t::GLUE, type),
+                basic_syntax_nodes::ChildedSyntaxNode<>{begin, end}{};
+    };
+
+    class BindExpr: public Expression, public basic_syntax_nodes::ChildedSyntaxNode<2>{
+    public:
+        BindExpr(types::Type const* type, basic_syntax_nodes::Ref<Expression> func, basic_syntax_nodes::Ref<Expression> member):
+                Expression(expr_type_t::BIND, type),
+                basic_syntax_nodes::ChildedSyntaxNode<2>{std::move(func), std::move(member)}{};
+    };
 }
