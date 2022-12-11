@@ -17,44 +17,6 @@ namespace statements {
 
         stmt_type_t stmt_type_;
     };
-#if 0
-    class UnaryOperatorStmt : public Statement, public basic_syntax_nodes::ChildedSyntaxNode<1> {
-    public:
-        UnaryOperatorStmt(basic_syntax_nodes::Ref<expressions::UnaryOperatorExpr> expr) :
-                Statement(stmt_type_t::UNARY_OP),
-                basic_syntax_nodes::ChildedSyntaxNode<1>(std::move(expr))
-                        {
-                        }
-    };
-
-    class BinaryOperatorStmt : public Statement, public basic_syntax_nodes::ChildedSyntaxNode<1> {
-    public:
-        BinaryOperatorStmt(basic_syntax_nodes::Ref<expressions::BinaryOperatorExpr> expr) :
-        Statement(stmt_type_t::BINARY_OP),
-        basic_syntax_nodes::ChildedSyntaxNode<1>(std::move(expr))
-        {
-        }
-    };
-
-    class DeclStmt : public Statement, public declarations::Declaration {
-    public:
-        DeclStmt(decl_type_t decl_type, const std::string &name, const types::Type *type) :
-        Statement(stmt_type_t::DECL), Declaration(decl_type, name, type) {}    
-    };
-
-    class FuncDeclStmt : public  Statement, public declarations::FuncDecl {
-    public:
-    template <class RandIt,
-                    class = std::enable_if_t<std::is_base_of<std::random_access_iterator_tag, 
-                                            typename std::iterator_traits<RandIt>::iterator_category>::value>>
-        FuncDeclStmt(const std::string &func_name, const types::FuncType *func_type, RandIt begin, RandIt end) : 
-        Statement(stmt_type_t::DECL), FuncDecl(func_name, func_type, begin, end) {}
-
-        template <class ...Elt>
-        FuncDeclStmt(const std::string &func_name, const types::FuncType *func_type, Elt... elt) : 
-        Statement(stmt_type_t::DECL), FuncDecl(func_name, func_type, elt...) {}
-    };
-#endif
 
     class AssignmentStatement: public Statement, public basic_syntax_nodes::ChildedSyntaxNode<1>{
     public:
