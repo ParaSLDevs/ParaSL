@@ -203,18 +203,15 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
     LOOP_IF_BODY =  STMT            [ASTBuilder::CompoundStatement()]
             ;
 
-    RANGE =
-            ((int_ >> ':') > int_ > -(':' > int_))                                       [ASTBuilder::Range()]
+    FOR_HEADER =
+                (lit("for") > '(' > NAME > lit("in") > (((int_ >> ':') > int_ > -(':' > int_)) | EXPR) > ')')               [ASTBuilder::ForHeader()]
             ;
 
-    LOOP_HEADER =
-                (lit("for") > '(' > NAME > lit("in") > (NAME | RANGE) > ')')               [ASTBuilder::ForStatement()]
-            |   (lit("while") > '(' > EXPR > ')')                                          [ASTBuilder::WhileStatement()]
+    FOR_STMT =
+            (FOR_HEADER > LOOP_IF_BODY)       [ASTBuilder::ForLoop()]
             ;
 
-    LOOP_STMT =
-                LOOP_HEADER > LOOP_IF_BODY
-            ;
+    WHILE_STMT = ((lit("while") > '(' > EXPR > ')') > LOOP_IF_BODY) [ASTBuilder::WhileStatement()];
 
     IF_STMT =
             (lit("if") > '(' > EXPR > ')'
@@ -268,7 +265,8 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
 
     STMT =
                 IF_STMT             [ASTBuilder::Pass()]
-            |   LOOP_STMT           [ASTBuilder::Pass()]
+            |   FOR_STMT            [ASTBuilder::Pass()]
+            |   WHILE_STMT          [ASTBuilder::Pass()]
             |   (OUTPUT_STMT > ';') [ASTBuilder::Pass()]
             |   DECL_EXPR           [ASTBuilder::Pass()]
             |   (ASSIGNMENT > ';')  [ASTBuilder::Pass()]

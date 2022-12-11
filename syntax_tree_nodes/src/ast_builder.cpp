@@ -368,4 +368,77 @@ namespace parasl::ast{
         // TODO
         return parasl::ast::Builder::Node();
     }
+
+    Builder::Node Builder::createForHeader(std::string var, Node const& range) {
+        auto* casted = dynamic_cast<expressions::RangeExpr*>(range->release());
+        assert(casted && "expected range expression here");
+        auto id = createDeclaration(var, casted->GetType());
+        auto* casted_id = dynamic_cast<statements::DeclarationStatement*>(id->release());
+        assert(casted_id && "expected declaration here");
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<statements::ForHeader>(
+                        std::unique_ptr<statements::DeclarationStatement>(casted_id),
+                        std::unique_ptr<expressions::RangeExpr>(casted)
+                ));
+    }
+
+    Builder::Node Builder::createRange(int begin, int end, int step) {
+
+        // TODO: maybe check if (begin <= end) here
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<expressions::IndexedRange>(getIntegralType(32), begin, end, step));
+    }
+
+    Builder::Node Builder::createRange(Node const& array) {
+
+        auto* casted = dynamic_cast<expressions::Expression*>(array->release());
+        assert(casted && "expected expression here");
+
+        auto* type = casted->GetType();
+        if(type->GetEntityType() != entity_type_t::ARRAY){
+            std::stringstream ss;
+            ss << "Cannot iterate over entity with type \"";
+            type->dump(ss);
+            ss << "\"";
+            throw SemaError(ss.str());
+        }
+
+        auto* array_type = dynamic_cast<types::ArrayType const*>(type);
+        assert(casted && "expected array type here");
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                    std::make_unique<expressions::ArrayRange>(array_type->GetEltType(),
+                                                              std::unique_ptr<expressions::Expression>(casted)));
+
+    }
+
+    Builder::Node Builder::createForLoop(Node const& header, Node const& body) {
+        auto* casted_header = dynamic_cast<statements::ForHeader*>(header->release());
+        assert(casted_header && "expected \'for\' header here");
+
+        auto* casted_body = dynamic_cast<statements::CompoundStatement*>(body->release());
+        assert(casted_body && "expected compound statement here");
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<statements::ForLoop>(
+                        std::unique_ptr<statements::ForHeader>(casted_header),
+                        std::unique_ptr<statements::CompoundStatement>(casted_body)
+                ));
+    }
+
+    Builder::Node Builder::createWhileLoop(const Builder::Node &condition, const Builder::Node &body) {
+        auto* casted_condition = dynamic_cast<expressions::Expression*>(condition->release());
+        assert(casted_condition && "expected expression here");
+
+        auto* casted_body = dynamic_cast<statements::CompoundStatement*>(body->release());
+        assert(casted_body && "expected compound statement here");
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<statements::WhileLoop>(
+                        std::unique_ptr<expressions::Expression>(casted_condition),
+                        std::unique_ptr<statements::CompoundStatement>(casted_body)
+                ));
+    }
 }

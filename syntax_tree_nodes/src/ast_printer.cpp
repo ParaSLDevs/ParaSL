@@ -141,4 +141,34 @@ namespace parasl::ast{
         std::cout << std::endl;
         n_tabs++;
     }
+
+    void Printer::operator()(const statements::ForLoop *) {
+        statement_preamble();
+        std::cout << "FOR";
+        statement_epilogue();
+    }
+
+    void Printer::operator()(const statements::WhileLoop *) {
+        statement_preamble();
+        std::cout << "WHILE";
+        statement_epilogue();
+    }
+
+    void Printer::operator()(const statements::ForHeader *) {
+        statement_preamble();
+        std::cout << "FOR HEADER";
+        statement_epilogue();
+    }
+
+    void Printer::operator()(const expressions::ArrayRange *node) {
+        expression_preamble();
+        std::cout << "Range over array";
+        expression_epilogue(node);
+    }
+
+    void Printer::operator()(const expressions::IndexedRange *node) {
+        expression_preamble();
+        std::cout << "indexed range: from " << node->begin() << " to " << node->end() << " with step " << node->step();
+        expression_epilogue(node);
+    }
 }

@@ -395,23 +395,51 @@ struct prim_types_list : qi::symbols<char, BuiltInType> {
             }
         };
 
-        struct ForStatement : public ActionBase<ForStatement>{
+        struct ForLoop : public ActionBase<ForLoop>{
             template<typename Context>
-            void impl(boost::fusion::vector<std::string, boost::variant<std::string, node_t>> const&, Context &ctx, qi::unused_type) const {
+            void impl(boost::fusion::vector<node_t, node_t> const& loop, Context &ctx, qi::unused_type) const {
+                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->createForLoop(
+                        boost::fusion::at_c<0>(loop),
+                        boost::fusion::at_c<1>(loop)
+                );
+            }
+        };
+
+        struct ForHeader : public ActionBase<ForHeader>{
+
+            struct RangeVisitor : public boost::static_visitor<node_t>
+            {
+                node_t operator()(node_t range) const
+                {
+                    return builderCtx->createRange(range);
+                }
+
+                node_t operator()(boost::fusion::vector<int, int, boost::optional<int>> range) const
+                {
+                    return builderCtx->createRange(boost::fusion::at_c<0>(range),
+                            boost::fusion::at_c<1>(range),
+                                    boost::fusion::at_c<2>(range) ? boost::fusion::at_c<2>(range).value() : 1);
+                }
+            };
+
+            template<typename Context>
+            void impl(boost::fusion::vector<std::string, boost::variant<boost::fusion::vector<int, int, boost::optional<int>>, node_t>> const& header, Context &ctx, qi::unused_type) const {
+                RangeVisitor rv;
+                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->createForHeader(
+                        boost::fusion::at_c<0>(header),
+                        boost::apply_visitor(rv, boost::fusion::at_c<1>(header))
+                        );
             }
         };
 
 
         struct WhileStatement : public ActionBase<WhileStatement>{
             template<typename Context>
-            void impl(node_t const& condition, Context &ctx, qi::unused_type) const {
-            }
-        };
-
-
-        struct Range : public ActionBase<Range>{
-            template<typename Context>
-            void impl(boost::fusion::vector<int, int, boost::optional<int>> const& range, Context &ctx, qi::unused_type) const {
+            void impl(boost::fusion::vector<node_t, node_t> const& while_stmt, Context &ctx, qi::unused_type) const {
+                boost::fusion::at_c<0>(ctx.attributes) = builderCtx->createWhileLoop(
+                        boost::fusion::at_c<0>(while_stmt),
+                        boost::fusion::at_c<1>(while_stmt)
+                        );
             }
         };
 
