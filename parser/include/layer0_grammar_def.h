@@ -70,8 +70,11 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
 
     TERM =
                 qi::uint_                                  [ASTBuilder::IntegralLiteral()]
-            //|   FUNC_CALL                                  [ASTBuilder::Pass()]
-            |   SUBTERM                                       [ASTBuilder::Pass()]
+// TODO
+#if 0
+            |   FUNC_CALL                                  [ASTBuilder::Pass()]
+#endif
+            |   SUBTERM                                    [ASTBuilder::Pass()]
             |   ('(' > EXPR > ')')                         [ASTBuilder::Pass()]
             ;
 
@@ -111,7 +114,6 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     EXPR =  OR_EXPR
-            //>>  *("=" > OR_EXPR)
             ;
 
     BOOST_SPIRIT_DEBUG_NODES(
@@ -146,7 +148,8 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
     ARR_DEF_WITH_REPEAT =
                 ((lit("repeat") >> '(') > (EXPR) > ',' > uint_ > ')')               [ASTBuilder::RepeatExpression()]
             ;
-
+// TODO
+#if 0
     ARR_ENTITY_EXPR =
                 ARR_DEF_WITH_TYPE                               [ASTBuilder::Pass()]
             |   INPUT_DEF                                       [ASTBuilder::Pass()]
@@ -169,7 +172,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
     FUNC_DEF =
                 ('{' >> STMTS > '}')    [ASTBuilder::Pass()]
             |   BIND_EXPR               [ASTBuilder::Pass()]
-            //|   EXPR                    [ASTBuilder::Pass()]
+            |   EXPR                    [ASTBuilder::Pass()]
             ;
 
     ENTITY_EXPR =
@@ -177,7 +180,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             |   STRUCT_DEF          [ASTBuilder::Pass()]
             |   FUNC_DEF            [ASTBuilder::Pass()]
             ;
-
+#endif
     BOOST_SPIRIT_DEBUG_NODES(
             (ENTITY_EXPR)
             (ARR_DEF_WITH_TYPE)
@@ -235,7 +238,10 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             |   VECTOR_TYPE
             |   PRIMITIVE_TYPE
             |   STRUCT_TYPE
-           // |   FUNC_TYPE
+// TODO
+#if 0
+            |   FUNC_TYPE
+#endif
             ;
 
     PRIMITIVE_TYPE = VAR_TYPE_WITH_BRACKETS
@@ -250,13 +256,14 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
     STRUCT_TYPE =
                 ('{' >> -((NAME >> ":" >> -VAR_TYPE) % ',') > '}')                         [ASTBuilder::StructType()]
             ;
-/*
+    // TODO
+#if 0
     FUNC_TYPE =
                 '(' >>
                     (-(DECL_EXPR % ','))
                 > ')' > ':' > VAR_TYPE
             ;
-*/
+#endif
     ASSIGNMENT_SEQ =
             (EXPR >> '=' >> (ASSIGNMENT_SEQ | EXPR)) [ASTBuilder::Assignment()];
 
@@ -291,7 +298,11 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
 
 
     LAYER0 =
-//                lit["layer"] >> '(' >> int_ >> char_(',') >> string >> ')' >> char_('{') >> STMTS >> char_('}')
+// TODO
+#if 0
+                lit["layer"] >> '(' >> int_ >> char_(',') >> string >> ')' >> char_('{') >> STMTS >> char_('}')
+            |
+#endif
                 STMTS   [ASTBuilder::Pass()]
             ;
 

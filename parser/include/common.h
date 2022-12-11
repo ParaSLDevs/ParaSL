@@ -477,6 +477,7 @@ struct prim_types_list : qi::symbols<char, BuiltInType> {
         struct OutputStatement : public ActionBase<OutputStatement>{
             template<typename Context>
             void impl(boost::fusion::vector<int, node_t> const& output, Context &ctx, qi::unused_type) const {
+                // TODO
             }
         };
 
