@@ -63,6 +63,30 @@ namespace parasl::ast{
                             derived.Derived::operator()(input);
                             break;
                         }
+                        case expr_type_t::INIT_LIST:{
+                            auto *init = dynamic_cast<const expressions::InitializationList *>(expr);
+                            assert(init && "expected init list expression");
+                            derived.Derived::operator()(init);
+                            break;
+                        }
+                        case expr_type_t::GLUE:{
+                            auto *glue = dynamic_cast<const expressions::GlueExpr *>(expr);
+                            assert(glue && "expected glue expression");
+                            derived.Derived::operator()(glue);
+                            break;
+                        }
+                        case expr_type_t::BIND:{
+                            auto *bind = dynamic_cast<const expressions::BindExpr *>(expr);
+                            assert(bind && "expected bind expression");
+                            derived.Derived::operator()(bind);
+                            break;
+                        }
+                        case expr_type_t::REPEAT:{
+                            auto *repeat = dynamic_cast<const expressions::RepeatExpr *>(expr);
+                            assert(repeat && "expected repeat expression");
+                            derived.Derived::operator()(repeat);
+                            break;
+                        }
                     }
                     break;
                 }

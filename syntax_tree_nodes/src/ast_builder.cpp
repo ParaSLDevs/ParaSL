@@ -325,4 +325,47 @@ namespace parasl::ast{
         return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
                 std::make_unique<statements::AssignmentStatement>(std::unique_ptr<expressions::Expression>(casted)));
     }
+
+    Builder::Node Builder::createRepeatExpr(Node const& expr, unsigned times) {
+        auto* casted = dynamic_cast<expressions::Expression*>(expr->release());
+        assert(casted && "expected expression here");
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<expressions::RepeatExpr>(getArrayType(casted->GetType(), times),
+                                                          std::unique_ptr<expressions::Expression>(casted),
+                                                          times));
+    }
+
+    Builder::Node Builder::createInitializerListExpr(std::vector<Node> const& members) {
+        assert(!members.empty() && "Expected non-empty member pack");
+
+        std::vector<std::unique_ptr<expressions::Expression>> casted_members;
+
+        std::transform(members.begin(), members.end(), std::back_inserter(casted_members), [](auto& member){
+            auto* casted = dynamic_cast<expressions::Expression*>(member->release());
+            assert(casted && "expected expression here");
+            return std::unique_ptr<expressions::Expression>(casted);
+        });
+
+        auto* type = casted_members.front()->GetType();
+
+        if(std::any_of(casted_members.begin(), casted_members.end(),
+                       [type](auto& member){ return member->GetType() != type;})){
+            throw SemaError("Initializer list expects all types be the same");
+        }
+
+        return std::make_shared<std::unique_ptr<basic_syntax_nodes::SyntaxNode>>(
+                std::make_unique<expressions::InitializationList>(getArrayType(type, casted_members.size()),
+                                                                  casted_members.begin(), casted_members.end()));
+    }
+
+    Builder::Node Builder::createGlueExpr(const std::vector<std::pair<Node, std::optional<std::string>>> &) {
+        // TODO
+        return parasl::ast::Builder::Node();
+    }
+
+    Builder::Node Builder::createBindExpr(const std::vector<std::reference_wrapper<Node>> &) {
+        // TODO
+        return parasl::ast::Builder::Node();
+    }
 }

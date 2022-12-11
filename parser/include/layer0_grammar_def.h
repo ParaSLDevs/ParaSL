@@ -140,11 +140,11 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
             ;
 
     ARR_DEF_WITH_TYPE =
-                ('{' >> -(EXPR % ',') > '}')                                               [qi::_1]
+                ('{' >> (EXPR % ',') > '}')                                               [ASTBuilder::InitializerList()]
             ;
 
     ARR_DEF_WITH_REPEAT =
-                ((lit("repeat") >> '(') > (EXPR | int_) > ',' > uint_ > ')')               [qi::_1]
+                ((lit("repeat") >> '(') > (EXPR) > ',' > uint_ > ')')               [ASTBuilder::RepeatExpression()]
             ;
 
     ARR_ENTITY_EXPR =
@@ -247,7 +247,7 @@ layer0_grammar<Iterator, Skipper>::layer0_grammar(error_handler<Iterator>& error
     VAR_BUILTIN_TYPE = VAR_BUILTIN_TYPES [ASTBuilder::BuiltInType()];
 
     DECL_EXPR =
-                (NAME >> -(':' >> VAR_TYPE) >> -('=' > (ASSIGNMENT_SEQ | EXPR)) >> ';' )   [ASTBuilder::Declaration()]
+                (NAME >> -(':' >> VAR_TYPE) >> -('=' > (ARR_DEF_WITH_REPEAT | ARR_DEF_WITH_TYPE | ASSIGNMENT_SEQ | EXPR)) >> ';' )   [ASTBuilder::Declaration()]
             ;
 
     STRUCT_TYPE =
